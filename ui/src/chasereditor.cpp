@@ -38,6 +38,9 @@
 #include "apputil.h"
 #include "chaser.h"
 #include "scene.h"
+#include "show.h"
+#include "track.h"
+#include "showfunction.h"
 #include "doc.h"
 
 #define SETTINGS_GEOMETRY "chasereditor/geometry"
@@ -55,6 +58,7 @@ ChaserEditor::ChaserEditor(QWidget* parent, Chaser* chaser, Doc* doc, bool liveM
     : QWidget(parent)
     , m_doc(doc)
     , m_chaser(chaser)
+    , m_beatTempo(0)
     , m_speedDials(NULL)
     , m_liveMode(liveMode)
 {
@@ -62,6 +66,13 @@ ChaserEditor::ChaserEditor(QWidget* parent, Chaser* chaser, Doc* doc, bool liveM
     Q_ASSERT(doc != NULL);
 
     setupUi(this);
+
+    /* QLC+DAN: remember the original time column titles, then show times
+     * in beats if this Chaser is used in a BPM-based Show */
+    for (int col = COL_FADEIN; col <= COL_DURATION; col++)
+        m_timeHeaderTexts.append(m_tree->headerItem()->text(col));
+    m_beatTempo = findShowTempo();
+    updateTimeHeaders();
 
     /* Disable editing of steps number */
     m_tree->setItemDelegateForColumn(COL_NUM, new NoEditDelegate(this));
@@ -606,7 +617,7 @@ void ChaserEditor::slotItemSelectionChanged()
 void ChaserEditor::slotItemChanged(QTreeWidgetItem *item, int column)
 {
     QString itemText = item->text(column);
-    quint32 newValue = Function::stringToSpeed(itemText);
+    quint32 newValue = textToSpeed(itemText);
     int idx = m_tree->indexOfTopLevelItem(item);
 
     ChaserStep step = m_chaser->steps().at(idx);
@@ -875,14 +886,14 @@ void ChaserEditor::slotFadeInDialChanged(int ms)
     {
     case Chaser::Common:
         if (QTreeWidgetItem* item = m_tree->topLevelItem(0))
-            item->setText(COL_FADEIN, Function::speedToString(ms));
+            item->setText(COL_FADEIN, speedText(ms));
         else
             m_chaser->setFadeInSpeed(Function::speedNormalize(ms));
         break;
     case Chaser::PerStep:
         foreach (QTreeWidgetItem* item, m_tree->selectedItems())
         {
-            item->setText(COL_FADEIN, Function::speedToString(ms));
+            item->setText(COL_FADEIN, speedText(ms));
         }
         break;
     default:
@@ -899,14 +910,14 @@ void ChaserEditor::slotFadeOutDialChanged(int ms)
     {
     case Chaser::Common:
         if (QTreeWidgetItem* item = m_tree->topLevelItem(0))
-            item->setText(COL_FADEOUT, Function::speedToString(ms));
+            item->setText(COL_FADEOUT, speedText(ms));
         else
             m_chaser->setFadeOutSpeed(Function::speedNormalize(ms));
         break;
     case Chaser::PerStep:
         foreach (QTreeWidgetItem* item, m_tree->selectedItems())
         {
-            item->setText(COL_FADEOUT, Function::speedToString(ms));
+            item->setText(COL_FADEOUT, speedText(ms));
         }
         break;
     default:
@@ -923,7 +934,7 @@ void ChaserEditor::slotHoldDialChanged(int ms)
     {
     case Chaser::Common:
         if (QTreeWidgetItem* item = m_tree->topLevelItem(0))
-            item->setText(COL_HOLD, Function::speedToString(ms));
+            item->setText(COL_HOLD, speedText(ms));
         else
         {
             if (m_chaser->fadeInMode() == Chaser::Common)
@@ -935,7 +946,7 @@ void ChaserEditor::slotHoldDialChanged(int ms)
     case Chaser::PerStep:
         foreach (QTreeWidgetItem* item, m_tree->selectedItems())
         {
-            item->setText(COL_HOLD, Function::speedToString(ms));
+            item->setText(COL_HOLD, speedText(ms));
         }
         break;
     default:
@@ -1236,10 +1247,10 @@ void ChaserEditor::updateItem(QTreeWidgetItem* item, ChaserStep& step)
     {
         case Chaser::Common:
             step.fadeIn = m_chaser->fadeInSpeed();
-            item->setText(COL_FADEIN, Function::speedToString(step.fadeIn));
+            item->setText(COL_FADEIN, speedText(step.fadeIn));
         break;
         case Chaser::PerStep:
-            item->setText(COL_FADEIN, Function::speedToString(step.fadeIn));
+            item->setText(COL_FADEIN, speedText(step.fadeIn));
         break;
         default:
             item->setText(COL_FADEIN, QString());
@@ -1250,10 +1261,10 @@ void ChaserEditor::updateItem(QTreeWidgetItem* item, ChaserStep& step)
     {
         case Chaser::Common:
             step.fadeOut = m_chaser->fadeOutSpeed();
-            item->setText(COL_FADEOUT, Function::speedToString(step.fadeOut));
+            item->setText(COL_FADEOUT, speedText(step.fadeOut));
         break;
         case Chaser::PerStep:
-            item->setText(COL_FADEOUT, Function::speedToString(step.fadeOut));
+            item->setText(COL_FADEOUT, speedText(step.fadeOut));
         break;
         default:
             item->setText(COL_FADEOUT, QString());
@@ -1266,12 +1277,12 @@ void ChaserEditor::updateItem(QTreeWidgetItem* item, ChaserStep& step)
         case Chaser::Common:
             step.duration = m_chaser->duration();
             step.hold = Function::speedSubtract(step.duration, step.fadeIn);
-            item->setText(COL_HOLD, Function::speedToString(step.hold));
-            item->setText(COL_DURATION, Function::speedToString(step.duration));
+            item->setText(COL_HOLD, speedText(step.hold));
+            item->setText(COL_DURATION, speedText(step.duration));
         break;
         case Chaser::PerStep:
-            item->setText(COL_HOLD, Function::speedToString(step.hold));
-            item->setText(COL_DURATION, Function::speedToString(step.duration));
+            item->setText(COL_HOLD, speedText(step.hold));
+            item->setText(COL_DURATION, speedText(step.duration));
         break;
     }
 
@@ -1355,5 +1366,125 @@ void ChaserEditor::printSteps() const
         qDebug() << "Step #" << i << ": id: " << st.fid << ": fadeIn: " << st.fadeIn << ", fadeOut: " << st.fadeOut << ", duration: " << st.duration;
         if (st.values.count() > 0)
             qDebug() << "-----> values found: " << st.values.count();
+    }
+}
+
+/****************************************************************************
+ * Beats display (QLC+DAN)
+ ****************************************************************************/
+
+void ChaserEditor::setBeatTempo(int bpm)
+{
+    if (bpm < 0)
+        bpm = 0;
+    if (bpm == m_beatTempo)
+        return;
+
+    m_beatTempo = bpm;
+    updateTimeHeaders();
+    updateTree();
+}
+
+int ChaserEditor::findShowTempo() const
+{
+    foreach (Function *f, m_doc->functionsByType(Function::ShowType))
+    {
+        Show *show = qobject_cast<Show *>(f);
+        if (show == NULL || show->timeDivisionType() == Show::Time)
+            continue;
+
+        foreach (Track *track, show->tracks())
+        {
+            foreach (ShowFunction *sf, track->showFunctions())
+            {
+                if (sf->functionID() == m_chaser->id())
+                    return show->timeDivisionBPM();
+            }
+        }
+    }
+    return 0;
+}
+
+QString ChaserEditor::speedText(uint ms) const
+{
+    if (m_beatTempo <= 0 || ms == Function::infiniteSpeed() || ms == Function::defaultSpeed())
+        return Function::speedToString(ms);
+
+    double beatMs = 60000.0 / (double)m_beatTempo;
+    double beats = (double)ms / beatMs;
+
+    /* Prefer common musical subdivisions (including triplets) when the
+     * stored time matches one, so that 1/3 of a beat shows as 0.333 */
+    static const int denominators[] = { 1, 2, 3, 4, 6, 8, 12, 16 };
+    for (int den : denominators)
+    {
+        double frac = qRound(beats * den) / (double)den;
+        if (qAbs((frac * beatMs) - (double)ms) <= 0.5 + 1e-6)
+        {
+            beats = frac;
+            break;
+        }
+    }
+
+    /* Use the fewest decimals that still convert back to the same
+     * number of milliseconds (within rounding) */
+    QString str;
+    for (int decimals = 0; decimals <= 6; decimals++)
+    {
+        str = QString::number(beats, 'f', decimals);
+        if (qAbs((str.toDouble() * beatMs) - (double)ms) <= 0.5 + 1e-6)
+            break;
+    }
+    return str;
+}
+
+uint ChaserEditor::textToSpeed(const QString &text) const
+{
+    if (m_beatTempo <= 0)
+        return Function::stringToSpeed(text);
+
+    QString str = text.trimmed();
+    str.replace(',', '.');
+    double beatMs = 60000.0 / (double)m_beatTempo;
+    bool ok = false;
+
+    // fraction of a beat, e.g. 1/4
+    if (str.contains('/'))
+    {
+        double num = str.section('/', 0, 0).trimmed().toDouble(&ok);
+        if (ok)
+        {
+            double den = str.section('/', 1).trimmed().toDouble(&ok);
+            if (ok && den > 0 && num >= 0)
+                return (uint)qRound((num / den) * beatMs);
+        }
+    }
+
+    // plain number of beats, e.g. 2 or 0.5
+    double beats = str.toDouble(&ok);
+    if (ok && beats >= 0)
+        return (uint)qRound(beats * beatMs);
+
+    // anything else (500ms, 1s, infinite) is a time
+    return Function::stringToSpeed(text);
+}
+
+void ChaserEditor::updateTimeHeaders()
+{
+    QTreeWidgetItem *header = m_tree->headerItem();
+    QString tooltip;
+    if (m_beatTempo > 0)
+        tooltip = tr("Times are in beats at %1 BPM (the tempo of the Show).\n"
+                     "Type a number of beats like 2 or 0.5, or a fraction like 1/4.\n"
+                     "To enter a time instead, include the unit, e.g. 500ms or 1s.").arg(m_beatTempo);
+
+    for (int i = 0; i < m_timeHeaderTexts.count(); i++)
+    {
+        int col = COL_FADEIN + i;
+        if (m_beatTempo > 0)
+            header->setText(col, tr("%1 (beats)").arg(m_timeHeaderTexts.at(i)));
+        else
+            header->setText(col, m_timeHeaderTexts.at(i));
+        header->setToolTip(col, tooltip);
     }
 }

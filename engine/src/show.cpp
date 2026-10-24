@@ -32,6 +32,7 @@
 #define KXMLQLCShowTimeDivision QStringLiteral("TimeDivision")
 #define KXMLQLCShowTimeType     QStringLiteral("Type")
 #define KXMLQLCShowTimeBPM      QStringLiteral("BPM")
+#define KXMLQLCShowGridOffset   QStringLiteral("GridOffset")
 
 /*****************************************************************************
  * Initialization
@@ -40,6 +41,7 @@
 Show::Show(Doc* doc) : Function(doc, Function::ShowType)
     , m_timeDivisionType(Time)
     , m_timeDivisionBPM(120)
+    , m_gridOffset(0)
     , m_latestTrackId(0)
     , m_latestShowFunctionID(0)
     , m_runner(NULL)
@@ -108,6 +110,7 @@ bool Show::copyFrom(const Function* function)
 
     m_timeDivisionType = show->m_timeDivisionType;
     m_timeDivisionBPM = show->m_timeDivisionBPM;
+    m_gridOffset = show->m_gridOffset;
     m_latestTrackId = show->m_latestTrackId;
     m_latestShowFunctionID = show->m_latestShowFunctionID;
 
@@ -183,6 +186,16 @@ int Show::timeDivisionBPM() const
 void Show::setTimeDivisionBPM(int BPM)
 {
     m_timeDivisionBPM = BPM;
+}
+
+quint32 Show::gridOffset() const
+{
+    return m_gridOffset;
+}
+
+void Show::setGridOffset(quint32 msec)
+{
+    m_gridOffset = msec;
 }
 
 QString Show::tempoToString(Show::TimeDivision type)
@@ -373,6 +386,8 @@ bool Show::saveXML(QXmlStreamWriter *doc) const
     doc->writeStartElement(KXMLQLCShowTimeDivision);
     doc->writeAttribute(KXMLQLCShowTimeType, tempoToString(m_timeDivisionType));
     doc->writeAttribute(KXMLQLCShowTimeBPM, QString::number(m_timeDivisionBPM));
+    if (m_gridOffset > 0)
+        doc->writeAttribute(KXMLQLCShowGridOffset, QString::number(m_gridOffset));
     doc->writeEndElement();
 
     foreach (Track *track, m_tracks)
@@ -406,6 +421,8 @@ bool Show::loadXML(QXmlStreamReader &root)
             QString type = root.attributes().value(KXMLQLCShowTimeType).toString();
             int bpm = root.attributes().value(KXMLQLCShowTimeBPM).toString().toInt();
             setTimeDivision(stringToTempo(type), bpm);
+            if (root.attributes().hasAttribute(KXMLQLCShowGridOffset))
+                setGridOffset(root.attributes().value(KXMLQLCShowGridOffset).toString().toUInt());
             root.skipCurrentElement();
         }
         else if (root.name() == KXMLQLCTrack)

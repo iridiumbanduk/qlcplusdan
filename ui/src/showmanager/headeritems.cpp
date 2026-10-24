@@ -34,6 +34,7 @@ ShowHeaderItem::ShowHeaderItem(int width)
     , m_timeScale(3)
     , m_BPMValue(120)
     , m_type(Show::Time)
+    , m_gridOffset(0)
 {
 }
 
@@ -59,15 +60,30 @@ void ShowHeaderItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->drawRect(0, 0, m_width, 35);
 
     if (m_type > Show::Time)
-        m_timeStep = ((float)(120 * HALF_SECOND_WIDTH) / (float)m_BPMValue) / (float)m_timeScale;
+        m_timeStep = beatWidth();
+
+    if (m_timeStep <= 0)
+        return;
+
+    /* In BPM mode the grid can be shifted to the right, so that bar 1
+     * starts at m_gridOffset milliseconds. Grid lines are also drawn in
+     * the area before the offset (counting backwards), but without labels */
+    float offsetPx = (float)(getGridOffsetMs() * (double)HALF_SECOND_WIDTH /
+                             (500.0 * (double)m_timeScale));
+    int firstIdx = -(int)(offsetPx / m_timeStep);
 
     // draw vertical timing lines and time labels
     int tmpSec = 0;
-    for (int i = 0; i < m_width / m_timeStep; i++)
+    for (int i = firstIdx; ; i++)
     {
-        float xpos = ((float)i * m_timeStep) + 1;
+        float xpos = offsetPx + ((float)i * m_timeStep) + 1;
+        if (xpos > m_width)
+            break;
+
+        bool isHit = ((i % m_timeHit) + m_timeHit) % m_timeHit == 0;
+
         painter->setPen(QPen(QColor(250, 250, 250, 255), 1));
-        if (i%m_timeHit == 0)
+        if (isHit)
         {
             painter->drawLine(xpos, 20, xpos, 34);
             if (m_height > HEADER_HEIGHT)
@@ -88,10 +104,9 @@ void ShowHeaderItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
                     painter->drawText(xpos - 4, 15, QString("%1m%2s").arg(tmpMin).arg(tmpSec));
                 }
             }
-            else
+            else if (i >= 0)
             {
-                tmpSec++;
-                painter->drawText(xpos - 4, 15, QString("%1").arg(tmpSec));
+                painter->drawText(xpos - 4, 15, QString("%1").arg((i / m_timeHit) + 1));
             }
         }
         else
@@ -108,6 +123,19 @@ void ShowHeaderItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         }
     }
 
+    // highlight where bar 1 starts when the grid is offset
+    if (offsetPx > 0)
+    {
+        painter->setPen(QPen(QColor(255, 140, 0, 255), 2));
+        painter->drawLine(offsetPx + 1, 0, offsetPx + 1, 34);
+    }
+}
+
+float ShowHeaderItem::beatWidth() const
+{
+    if (m_BPMValue <= 0 || m_timeScale <= 0)
+        return HALF_SECOND_WIDTH;
+    return ((float)(120 * HALF_SECOND_WIDTH) / (float)m_BPMValue) / (float)m_timeScale;
 }
 
 void ShowHeaderItem::setTimeScale(int val)
@@ -168,6 +196,40 @@ float ShowHeaderItem::getTimeDivisionStep() const
     if (m_type > Show::Time && m_timeStep <= 5)
         return m_timeStep * m_timeHit;
     return m_timeStep;
+}
+
+void ShowHeaderItem::setGridOffset(quint32 msec)
+{
+    m_gridOffset = msec;
+    update();
+}
+
+quint32 ShowHeaderItem::getGridOffset() const
+{
+    return m_gridOffset;
+}
+
+double ShowHeaderItem::getGridOffsetMs() const
+{
+    if (m_type == Show::Time)
+        return 0;
+    return m_gridOffset;
+}
+
+double ShowHeaderItem::getGridStepMs() const
+{
+    // in Time mode a division is half a second, scaled by the zoom level
+    if (m_type == Show::Time)
+        return 500.0 * m_timeScale;
+
+    if (m_BPMValue <= 0)
+        return 500.0;
+
+    // one beat. When zoomed out so far that beats are not drawn, snap to bars
+    double beatMs = 60000.0 / (double)m_BPMValue;
+    if (beatWidth() <= 5)
+        return beatMs * m_timeHit;
+    return beatMs;
 }
 
 void ShowHeaderItem::setWidth(int w)

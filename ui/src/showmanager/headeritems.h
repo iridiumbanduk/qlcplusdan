@@ -61,6 +61,18 @@ public:
     int getHalfSecondWidth() const;
     float getTimeDivisionStep() const;
 
+    /** Set/Get the grid offset in milliseconds. In BPM mode this is the
+     *  time where bar 1 of the grid starts. Ignored in Time mode. */
+    void setGridOffset(quint32 msec);
+    quint32 getGridOffset() const;
+
+    /** Return the effective grid offset (0 in Time mode) */
+    double getGridOffsetMs() const;
+
+    /** Return the snapping step of the grid in milliseconds
+     *  (a beat in BPM mode, or a bar when zoomed out too far) */
+    double getGridStepMs() const;
+
     void setWidth(int);
     void setHeight(int);
 
@@ -85,6 +97,11 @@ private:
     int m_BPMValue;
     /** The type of time division */
     Show::TimeDivision m_type;
+    /** Time in milliseconds where bar 1 of the BPM grid starts */
+    quint32 m_gridOffset;
+
+    /** Width in pixels of a single beat in BPM mode */
+    float beatWidth() const;
 };
 
 /**

@@ -138,6 +138,8 @@ private:
     QAction *m_playAction;
     QComboBox *m_timeDivisionCombo;
     QSpinBox *m_bpmField;
+    QSpinBox *m_gridOffsetField;
+    QAction *m_gridOffsetCursorAction;
 
 protected slots:
     /** Slot called when the user selects a show from
@@ -170,6 +172,15 @@ protected slots:
 protected slots:
     void slotTimeDivisionTypeChanged(int idx);
     void slotBPMValueChanged(int value);
+    void slotGridOffsetChanged(int value);
+    void slotGridOffsetFromCursor();
+
+private:
+    /** BPM of the current Show, or 0 if it uses a Time division */
+    int currentBeatTempo() const;
+
+    /** Tell the open step editor which tempo to show beats in */
+    void updateEditorBeatTempo();
 
     /*********************************************************************
      * UI events

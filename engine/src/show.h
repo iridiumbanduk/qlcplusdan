@@ -86,12 +86,19 @@ public:
     int timeDivisionBPM() const;
     void setTimeDivisionBPM(int BPM);
 
+    /** Get/Set the grid offset in milliseconds. When a BPM time division
+     *  is used, this is the time where the first bar of the grid starts.
+     *  It is a design-time aid only and does not affect playback. */
+    quint32 gridOffset() const;
+    void setGridOffset(quint32 msec);
+
     static QString tempoToString(Show::TimeDivision type);
     static Show::TimeDivision stringToTempo(const QString& tempo);
 
 private:
     TimeDivision m_timeDivisionType;
     int m_timeDivisionBPM;
+    quint32 m_gridOffset;
 
     /*********************************************************************
      * Tracks

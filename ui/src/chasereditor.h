@@ -58,6 +58,10 @@ public:
      *  and scroll the view to it */
     void selectStepAtTime(quint32 time);
 
+    /** QLC+DAN: display and edit step times in beats at the given tempo.
+     *  Values are still stored in milliseconds. 0 means milliseconds */
+    void setBeatTempo(int bpm);
+
 private:
     FunctionParent functionParent() const;
 
@@ -78,6 +82,27 @@ private slots:
 private:
     Doc* m_doc;
     Chaser* m_chaser; // The Chaser being edited
+
+    /************************************************************************
+     * Beats display (QLC+DAN)
+     ************************************************************************/
+private:
+    /** Find the BPM of a BPM-divided Show using this Chaser (0 if none) */
+    int findShowTempo() const;
+
+    /** Convert a time to the text shown in the tree (beats or time) */
+    QString speedText(uint ms) const;
+
+    /** Convert the text typed in the tree to a time in milliseconds.
+     *  In beats mode, plain numbers (e.g. 0.5, 2) and fractions (1/4)
+     *  are beats, while text with units (500ms, 1s) is a time */
+    uint textToSpeed(const QString& text) const;
+
+    void updateTimeHeaders();
+
+    /** Beats per minute used to display times in beats. 0 = milliseconds */
+    int m_beatTempo;
+    QStringList m_timeHeaderTexts;
 
     /************************************************************************
      * List manipulation

@@ -119,6 +119,13 @@ public:
 
     void setSnapToGrid(bool enable);
 
+    /** Set the time (in msec) where bar 1 of the BPM grid starts */
+    void setGridOffset(quint32 msec);
+
+    /** Return the given time (in msec) snapped to the closest grid line.
+     *  The start of the show (0) is always a valid snap point */
+    quint32 snapTimeToGrid(quint32 time) const;
+
     /*********************************************************************
      * Cursor
      *********************************************************************/

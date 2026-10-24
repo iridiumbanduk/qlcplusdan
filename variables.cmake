@@ -10,7 +10,8 @@ set(CMAKE_AUTORCC ON)
 
 add_definitions(-DUNICODE)
 
-set(APPNAME "Q Light Controller Plus")
+# Personal build, renamed so it can be installed alongside the official QLC+
+set(APPNAME "QLC+DAN")
 set(FXEDNAME "Fixture Definition Editor")
 
 if(ANDROID OR IOS)

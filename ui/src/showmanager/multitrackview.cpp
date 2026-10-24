@@ -26,6 +26,7 @@
 #include <QScrollBar>
 #include <QSlider>
 #include <QDebug>
+#include <QtMath>
 
 #include "multitrackview.h"
 #include "track.h"
@@ -473,6 +474,31 @@ void MultiTrackView::setSnapToGrid(bool enable)
         m_header->setHeight(HEADER_HEIGHT);
 }
 
+void MultiTrackView::setGridOffset(quint32 msec)
+{
+    m_header->setGridOffset(msec);
+}
+
+quint32 MultiTrackView::snapTimeToGrid(quint32 time) const
+{
+    double step = m_header->getGridStepMs();
+    if (step <= 0)
+        return time;
+
+    double offset = m_header->getGridOffsetMs();
+    double snapped = offset + (qRound64(((double)time - offset) / step) * step);
+
+    // grid lines before the start of the show are not reachable
+    if (snapped < 0)
+        snapped += step;
+
+    // the start of the show is always a valid position
+    if ((double)time < qAbs(snapped - (double)time))
+        return 0;
+
+    return (quint32)qRound64(snapped);
+}
+
 void MultiTrackView::mouseReleaseEvent(QMouseEvent * e)
 {
     if (getSelectedItem() == NULL)
@@ -483,8 +509,15 @@ void MultiTrackView::mouseReleaseEvent(QMouseEvent * e)
         quint32 xpos = mapToScene(e->pos()).x();
         if (xpos > TRACK_WIDTH)
         {
+            quint32 time = getTimeFromPosition(xpos);
+            // snap the cursor too, unless Shift is held down
+            if (m_snapToGrid && !(e->modifiers() & Qt::ShiftModifier))
+            {
+                time = snapTimeToGrid(time);
+                xpos = getPositionFromTime(time);
+            }
             m_cursor->setPos(xpos, 0);
-            m_cursor->setTime(getTimeFromCursor());
+            m_cursor->setTime(time);
             emit timeChanged(m_cursor->getTime());
         }
         emit viewClicked(e);
@@ -513,8 +546,16 @@ void MultiTrackView::wheelEvent(QWheelEvent *event)
 
 void MultiTrackView::slotHeaderClicked(QGraphicsSceneMouseEvent *event)
 {
-    m_cursor->setPos(TRACK_WIDTH + event->pos().toPoint().x(), 0);
-    m_cursor->setTime(getTimeFromCursor());
+    quint32 xpos = TRACK_WIDTH + qMax(0, event->pos().toPoint().x());
+    quint32 time = getTimeFromPosition(xpos);
+    // snap the cursor too, unless Shift is held down
+    if (m_snapToGrid && !(event->modifiers() & Qt::ShiftModifier))
+    {
+        time = snapTimeToGrid(time);
+        xpos = getPositionFromTime(time);
+    }
+    m_cursor->setPos(xpos, 0);
+    m_cursor->setTime(time);
     qDebug() << Q_FUNC_INFO << "Cursor moved to time:" << m_cursor->getTime();
     emit timeChanged(m_cursor->getTime());
 }
@@ -598,12 +639,11 @@ void MultiTrackView::slotItemMoved(QGraphicsSceneMouseEvent *event, ShowItem *it
         s_time = item->getStartTime();
         moved = false;
     }
-    else if (m_snapToGrid == true)
+    else if (m_snapToGrid == true && !(event->modifiers() & Qt::ShiftModifier))
     {
-        float step = m_header->getTimeDivisionStep();
-        float gridPos = ((int)(item->x() / step) * step);
-        item->setPos(gridPos + 2, ypos);
-        s_time = getTimeFromPosition(gridPos);
+        // snap the item start to the closest grid line (hold Shift to skip)
+        s_time = snapTimeToGrid(getTimeFromPosition(item->x() - 2));
+        item->setPos(getPositionFromTime(s_time) + 2, ypos);
     }
     else
     {

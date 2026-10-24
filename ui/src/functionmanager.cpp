@@ -353,6 +353,10 @@ void FunctionManager::slotAddSequence()
         Function* f = new Sequence(m_doc);
         Sequence *sequence = qobject_cast<Sequence *>(f);
         sequence->setBoundSceneID(scene->id());
+        // QLC+DAN: new sequences time each step individually by default
+        sequence->setDurationMode(Chaser::PerStep);
+        sequence->setFadeInMode(Chaser::PerStep);
+        sequence->setFadeOutMode(Chaser::PerStep);
 
         if (m_doc->addFunction(sequence) == true)
         {

@@ -10,14 +10,14 @@
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\nsis3-vintage.bmp"
 !define MUI_HEADERIMAGE_LEFT
-!define MUI_PAGE_HEADER_TEXT "Q Light Controller Plus"
+!define MUI_PAGE_HEADER_TEXT "QLC+DAN"
 
 ;--------------------------------
 ;General
-Name "Q Light Controller Plus"
-OutFile "QLC+_4.14.5.exe"
-InstallDir C:\QLC+
-InstallDirRegKey HKCU "Software\qlcplus" "Install_Dir"
+Name "QLC+DAN"
+OutFile "QLC+DAN_4.14.5.exe"
+InstallDir C:\QLC+DAN
+InstallDirRegKey HKCU "Software\qlcplusdan" "Install_Dir"
 RequestExecutionLevel user
 
 !define MUI_LICENSEPAGE_TEXT_TOP "Do you accept the following statement of the Apache 2.0 license?"
@@ -46,14 +46,14 @@ Page instfiles
 Function StartMenuGroupSelect
 	Push $R1
 
-	StartMenu::Select /checknoshortcuts "Don't create a start menu folder" /autoadd /lastused $R0 "Q Light Controller Plus"
+	StartMenu::Select /checknoshortcuts "Don't create a start menu folder" /autoadd /lastused $R0 "QLC+DAN"
 	Pop $R1
 
 	StrCmp $R1 "success" success
 	StrCmp $R1 "cancel" done
 		; error
 		MessageBox MB_OK $R1
-		StrCpy $R0 "Q Light Controller Plus" # use default
+		StrCpy $R0 "QLC+DAN" # use default
 		Return
 	success:
 	Pop $R0
@@ -69,10 +69,10 @@ Section
 	StrCpy $R1 $R0 1
 	StrCmp $R1 ">" skip
 		CreateDirectory $SMPROGRAMS\$R0
-		CreateShortCut '$SMPROGRAMS\$R0\Q Light Controller Plus.lnk' $INSTDIR\qlcplus.exe
+		CreateShortCut '$SMPROGRAMS\$R0\QLC+DAN.lnk' $INSTDIR\qlcplus.exe
 
 		CreateDirectory $SMPROGRAMS\$R0
-		CreateShortCut '$SMPROGRAMS\$R0\Fixture Definition Editor.lnk' $INSTDIR\qlcplus-fixtureeditor.exe
+		CreateShortCut '$SMPROGRAMS\$R0\QLC+DAN Fixture Editor.lnk' $INSTDIR\qlcplus-fixtureeditor.exe
 
 		CreateDirectory $SMPROGRAMS\$R0
 		CreateShortCut '$SMPROGRAMS\$R0\Uninstall.lnk' $INSTDIR\uninstall.exe
@@ -100,17 +100,9 @@ Section
 	File /r translations
 	File /r Web
 
-	WriteRegStr HKCR ".qxw" "" "QLightControllerPlus.Document"
-	WriteRegStr HKCR "QLightControllerPlus.Document" "" "Q Light Controller Plus Workspace"
-	WriteRegStr HKCR "QLightControllerPlus.Document\DefaultIcon" "" "$INSTDIR\qlcplus.exe,0"
-	WriteRegStr HKCR "QLightControllerPlus.Document\shell\open\command" "" '"$INSTDIR\qlcplus.exe" --open "%1"'
+	; QLC+DAN: file associations are left to the official QLC+ install
 
-	WriteRegStr HKCR ".qxf" "" "QLightControllerPlusFixture.Document"
-	WriteRegStr HKCR "QLightControllerPlusFixture.Document" "" "Q Light Controller Plus Fixture"
-	WriteRegStr HKCR "QLightControllerPlusFixture.Document\DefaultIcon" "" "$INSTDIR\qlcplus-fixtureeditor.exe,0"
-	WriteRegStr HKCR "QLightControllerPlusFixture.Document\shell\open\command" "" '"$INSTDIR\qlcplus-fixtureeditor.exe" --open "%1"'
-
-	WriteRegStr HKCU "SOFTWARE\qlcplus" "Install_Dir" "$INSTDIR"
+	WriteRegStr HKCU "SOFTWARE\qlcplusdan" "Install_Dir" "$INSTDIR"
 
 	WriteUninstaller $INSTDIR\uninstall.exe
 SectionEnd
@@ -143,12 +135,7 @@ Section "Uninstall"
 
 	RMDir $INSTDIR
 
-	DeleteRegKey HKCR ".qxw"
-	DeleteRegKey HKCR "QLightControllerPlus.Document"
-
-	DeleteRegKey HKCR ".qxf"
-	DeleteRegKey HKCR "QLightControllerPlusFixture.Document"
-
-	; This will delete all settings
-	DeleteRegKey HKCU "Software\qlcplus"
+	; QLC+DAN: leave file associations and the official QLC+ settings alone
+	DeleteRegKey HKCU "Software\qlcplusdan"
+	DeleteRegKey HKCU "Software\qlcplus\QLC+DAN"
 SectionEnd

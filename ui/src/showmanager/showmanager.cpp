@@ -83,6 +83,8 @@ ShowManager::ShowManager(QWidget* parent, Doc* doc)
     , m_snapGridAction(NULL)
     , m_stopAction(NULL)
     , m_playAction(NULL)
+    , m_gridOffsetField(NULL)
+    , m_gridOffsetCursorAction(NULL)
 {
     Q_ASSERT(s_instance == NULL);
     s_instance = this;
@@ -363,6 +365,30 @@ void ShowManager::initToolbar()
     m_toolbar->addWidget(m_bpmField);
     connect(m_bpmField, SIGNAL(valueChanged(int)),
             this, SLOT(slotBPMValueChanged(int)));
+
+    /* Grid offset: where bar 1 of the BPM grid starts */
+    QLabel* offsetLabel = new QLabel(tr("Bar 1 at:"));
+    offsetLabel->setToolTip(tr("Grid offset: the time where bar 1 of the BPM grid starts"));
+    m_toolbar->addWidget(offsetLabel);
+
+    m_gridOffsetField = new QSpinBox();
+    m_gridOffsetField->setFixedWidth(100);
+    m_gridOffsetField->setRange(0, 3600000);
+    m_gridOffsetField->setSingleStep(10);
+    m_gridOffsetField->setSuffix(" ms");
+    m_gridOffsetField->setValue(0);
+    m_gridOffsetField->setEnabled(false);
+    m_gridOffsetField->setToolTip(offsetLabel->toolTip());
+    m_toolbar->addWidget(m_gridOffsetField);
+    connect(m_gridOffsetField, SIGNAL(valueChanged(int)),
+            this, SLOT(slotGridOffsetChanged(int)));
+
+    m_gridOffsetCursorAction = new QAction(tr("Set to cursor"), this);
+    m_gridOffsetCursorAction->setToolTip(tr("Make bar 1 of the grid start at the current cursor position"));
+    m_gridOffsetCursorAction->setEnabled(false);
+    connect(m_gridOffsetCursorAction, SIGNAL(triggered()),
+            this, SLOT(slotGridOffsetFromCursor()));
+    m_toolbar->addAction(m_gridOffsetCursorAction);
 }
 
 /*********************************************************************
@@ -498,6 +524,7 @@ void ShowManager::showRightEditor(Function *function)
         m_currentEditor = new ChaserEditor(m_vsplitter->widget(1), chaser, m_doc);
         if (m_currentEditor != NULL)
         {
+            qobject_cast<ChaserEditor*>(m_currentEditor)->setBeatTempo(currentBeatTempo());
             connect(m_currentEditor, SIGNAL(stepSelectionChanged(int)),
                     this, SLOT(slotStepSelectionChanged(int)));
         }
@@ -509,6 +536,7 @@ void ShowManager::showRightEditor(Function *function)
         if (m_currentEditor != NULL)
         {
             ChaserEditor *editor = qobject_cast<ChaserEditor*>(m_currentEditor);
+            editor->setBeatTempo(currentBeatTempo());
 
             editor->showOrderAndDirection(false);
 
@@ -781,6 +809,8 @@ void ShowManager::slotAddItem()
                     sequence->setDirection(Function::Forward);
                     sequence->setRunOrder(Function::SingleShot);
                     sequence->setDurationMode(Chaser::PerStep);
+                    sequence->setFadeInMode(Chaser::PerStep);
+                    sequence->setFadeOutMode(Chaser::PerStep);
                     m_currentScene->setVisible(false);
                     f->setName(QString("%1 %2").arg(tr("New Sequence")).arg(f->id()));
                     m_showview->addSequence(sequence, m_currentTrack);
@@ -867,6 +897,10 @@ void ShowManager::slotAddSequence()
     if (m_doc->addFunction(f) == true)
     {
         sequence->setRunOrder(Function::SingleShot);
+        // QLC+DAN: new sequences time each step individually by default
+        sequence->setDurationMode(Chaser::PerStep);
+        sequence->setFadeInMode(Chaser::PerStep);
+        sequence->setFadeOutMode(Chaser::PerStep);
         m_currentScene->setVisible(false);
         f->setName(QString("%1 %2").arg(tr("New Sequence")).arg(f->id()));
         showSceneEditor(m_currentScene);
@@ -1243,12 +1277,12 @@ void ShowManager::slotTimeDivisionTypeChanged(int idx)
     if (var.isValid())
     {
         m_showview->setHeaderType((Show::TimeDivision)var.toInt());
-        if (idx > 0)
-            m_bpmField->setEnabled(true);
-        else
-            m_bpmField->setEnabled(false);
+        m_bpmField->setEnabled(idx > 0);
+        m_gridOffsetField->setEnabled(idx > 0);
+        m_gridOffsetCursorAction->setEnabled(idx > 0);
         if (m_show != NULL)
             m_show->setTimeDivision((Show::TimeDivision)var.toInt(), m_bpmField->value());
+        updateEditorBeatTempo();
     }
 }
 
@@ -1258,6 +1292,37 @@ void ShowManager::slotBPMValueChanged(int value)
     QVariant var = m_timeDivisionCombo->itemData(m_timeDivisionCombo->currentIndex());
     if (var.isValid() && m_show != NULL)
         m_show->setTimeDivision((Show::TimeDivision)var.toInt(), m_bpmField->value());
+    updateEditorBeatTempo();
+}
+
+int ShowManager::currentBeatTempo() const
+{
+    QVariant var = m_timeDivisionCombo->itemData(m_timeDivisionCombo->currentIndex());
+    if (var.isValid() && var.toInt() != Show::Time)
+        return m_bpmField->value();
+    return 0;
+}
+
+void ShowManager::updateEditorBeatTempo()
+{
+    ChaserEditor *editor = qobject_cast<ChaserEditor*>(m_currentEditor);
+    if (editor != NULL)
+        editor->setBeatTempo(currentBeatTempo());
+}
+
+void ShowManager::slotGridOffsetChanged(int value)
+{
+    m_showview->setGridOffset(value);
+    if (m_show != NULL)
+    {
+        m_show->setGridOffset(value);
+        m_doc->setModified();
+    }
+}
+
+void ShowManager::slotGridOffsetFromCursor()
+{
+    m_gridOffsetField->setValue(m_showview->getTimeFromCursor());
 }
 
 void ShowManager::slotViewClicked(QMouseEvent *event)
@@ -1646,12 +1711,17 @@ void ShowManager::updateMultiTrackView()
     // prevent m_show time division override
     disconnect(m_bpmField, SIGNAL(valueChanged(int)), this, SLOT(slotBPMValueChanged(int)));
 
+    disconnect(m_gridOffsetField, SIGNAL(valueChanged(int)), this, SLOT(slotGridOffsetChanged(int)));
+
     m_bpmField->setValue(m_show->timeDivisionBPM());
     m_showview->setBPMValue(m_show->timeDivisionBPM());
+    m_gridOffsetField->setValue(m_show->gridOffset());
+    m_showview->setGridOffset(m_show->gridOffset());
     int tIdx = m_timeDivisionCombo->findData(QVariant(m_show->timeDivisionType()));
     m_timeDivisionCombo->setCurrentIndex(tIdx);
 
     connect(m_bpmField, SIGNAL(valueChanged(int)), this, SLOT(slotBPMValueChanged(int)));
+    connect(m_gridOffsetField, SIGNAL(valueChanged(int)), this, SLOT(slotGridOffsetChanged(int)));
     connect(m_show, SIGNAL(timeChanged(quint32)), this, SLOT(slotUpdateTimeAndCursor(quint32)));
     connect(m_show, SIGNAL(showFinished()), this, SLOT(slotStopPlayback()));
     connect(m_show, SIGNAL(stopped(quint32)), this, SLOT(slotShowStopped()));
