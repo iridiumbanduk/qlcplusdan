@@ -26,6 +26,7 @@
 
 #include "ui_sceneeditor.h"
 #include "groupsconsole.h"
+#include "chaserstep.h"
 #include "fixture.h"
 #include "scene.h"
 
@@ -34,6 +35,7 @@ class SpeedDialWidget;
 class FixtureConsole;
 class MasterTimer;
 class QComboBox;
+class QCheckBox;
 class OutputMap;
 class InputMap;
 class QAction;
@@ -59,6 +61,11 @@ public:
      */
     SceneEditor(QWidget* parent, Scene* scene, Doc* doc, bool applyValues);
     ~SceneEditor();
+
+    /** QLC+DAN: when the user has not chosen yet, untick "Link identical
+     *  fixtures" if identical fixtures already differ in any of the given
+     *  steps (e.g. a sequence with a panning effect) */
+    void setLinkDefaultFromSteps(const QList<ChaserStep> &steps);
 
 public slots:
     void slotFunctionManagerActive(bool active);
@@ -213,6 +220,29 @@ private:
     /** Flag to indicate if some fixture channels were
      *  manually selected and copied to clipboard */
     bool m_copyFromSelection;
+
+    /*********************************************************************
+     * Link identical fixtures (QLC+DAN)
+     *********************************************************************/
+private:
+    /** Return true if two fixtures have the same definition and mode */
+    static bool fixturesAreIdentical(Fixture *a, Fixture *b);
+
+    /** Return true if identical fixtures have different values
+     *  for the same channel in the given list of values */
+    bool identicalFixturesDiffer(const QList<SceneValue> &values) const;
+
+    /** Copy a channel change to every other identical fixture in this scene */
+    void applyToLinkedFixtures(quint32 fxi, quint32 channel, uchar value, bool enabled);
+
+private slots:
+    void slotLinkFixturesToggled(bool checked);
+
+private:
+    QCheckBox *m_linkFixturesCheck;
+    /** When > 0, value changes are not copied to linked fixtures
+     *  (e.g. while loading step values or copying them already) */
+    int m_linkSuspended;
 };
 
 /** @} */

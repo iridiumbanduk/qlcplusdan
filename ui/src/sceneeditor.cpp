@@ -25,6 +25,7 @@
 #include <QScrollArea>
 #include <QTabWidget>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QSettings>
 #include <QLineEdit>
 #include <QToolBar>
@@ -40,6 +41,7 @@
 #include "fixtureconsole.h"
 #include "groupsconsole.h"
 #include "qlcfixturedef.h"
+#include "qlcfixturemode.h"
 #include "channelsgroup.h"
 #include "qlcclipboard.h"
 #include "positiontool.h"
@@ -63,6 +65,7 @@
 #define UI_STATE_TAB_INDEX "tabIndex"
 #define UI_STATE_TAB_MODE  "tabMode"
 #define UI_STATE_SHOW_DIAL "showDial"
+#define UI_STATE_LINK_FIXTURES "linkIdenticalFixtures"
 #define UI_STATE_TABBED_FIXTURES  0
 #define UI_STATE_ALL_FIXTURES     1
 
@@ -77,6 +80,8 @@ SceneEditor::SceneEditor(QWidget* parent, Scene* scene, Doc* doc, bool applyValu
     , m_currentTab(KTabGeneral)
     , m_fixtureFirstTabIndex(1)
     , m_copyFromSelection(false)
+    , m_linkFixturesCheck(NULL)
+    , m_linkSuspended(0)
 {
     qDebug() << Q_FUNC_INFO;
 
@@ -142,6 +147,9 @@ void SceneEditor::slotFunctionManagerActive(bool active)
 
 void SceneEditor::slotSetSceneValues(QList <SceneValue>&sceneValues)
 {
+    // loading the values of a step must not be copied to linked fixtures
+    m_linkSuspended++;
+
     QListIterator <SceneValue> it(sceneValues);
 
     while (it.hasNext() == true)
@@ -155,6 +163,8 @@ void SceneEditor::slotSetSceneValues(QList <SceneValue>&sceneValues)
         if (fc != NULL)
             fc->setSceneValue(sv);
     }
+
+    m_linkSuspended--;
 }
 
 void SceneEditor::slotFixtureRemoved(quint32 id)
@@ -242,6 +252,19 @@ void SceneEditor::init(bool applyValues)
             slotChaserComboActivated(index);
         }
     }
+    /* QLC+DAN: link identical fixtures. Ticked by default, unless the
+     * user chose otherwise for this scene or identical fixtures in it
+     * already have different values */
+    m_linkFixturesCheck = new QCheckBox(tr("Link identical fixtures"), this);
+    m_linkFixturesCheck->setToolTip(tr("When ticked, changing a channel of a fixture also changes the same channel\n"
+                                       "of every other fixture of the same model and mode in this scene.\n"
+                                       "Untick it to give identical fixtures different values (e.g. panning effects)."));
+    QVariant linkState = m_scene->uiStateValue(UI_STATE_LINK_FIXTURES);
+    if (linkState.isValid())
+        m_linkFixturesCheck->setChecked(linkState.toBool());
+    else
+        m_linkFixturesCheck->setChecked(!identicalFixturesDiffer(m_scene->values()));
+
     QLabel *nameLabel = new QLabel(tr("Scene name:"));
     m_nameEdit = new QLineEdit();
 
@@ -272,6 +295,8 @@ void SceneEditor::init(bool applyValues)
             this, SLOT(slotChaserComboActivated(int)));
     connect(m_doc, SIGNAL(modeChanged(Doc::Mode)),
             this, SLOT(slotModeChanged(Doc::Mode)));
+    connect(m_linkFixturesCheck, SIGNAL(toggled(bool)),
+            this, SLOT(slotLinkFixturesToggled(bool)));
 
     /* Toolbar */
     QToolBar* toolBar = new QToolBar(this);
@@ -285,6 +310,7 @@ void SceneEditor::init(bool applyValues)
     toolBar->addAction(m_copyAction);
     toolBar->addAction(m_pasteAction);
     toolBar->addAction(m_copyToAllAction);
+    toolBar->addWidget(m_linkFixturesCheck);
     toolBar->addSeparator();
     toolBar->addAction(m_colorToolAction);
     toolBar->addAction(m_positionToolAction);
@@ -902,6 +928,10 @@ void SceneEditor::slotModeChanged(Doc::Mode mode)
 
 void SceneEditor::slotViewModeChanged(bool tabbed, bool applyValues)
 {
+    // rebuilding the consoles must not copy values to linked fixtures
+    m_linkSuspended++;
+    struct LinkResume { int &c; ~LinkResume() { c--; } } linkResume { m_linkSuspended };
+
     m_tab->blockSignals(true);
     for (int i = m_tab->count() - 1; i >= m_fixtureFirstTabIndex; i--)
     {
@@ -1602,6 +1632,9 @@ void SceneEditor::slotValueChanged(quint32 fxi, quint32 channel, uchar value)
 
     if (m_source != NULL)
         m_source->set(fxi, channel, value);
+
+    if (m_initFinished == true)
+        applyToLinkedFixtures(fxi, channel, value, true);
 }
 
 void SceneEditor::slotChecked(quint32 fxi, quint32 channel, bool state)
@@ -1620,6 +1653,7 @@ void SceneEditor::slotChecked(quint32 fxi, quint32 channel, bool state)
                 m_source->unset(fxi, channel);
                 emit fixtureValueChanged(SceneValue(fxi, channel, 0), false);
             }
+            applyToLinkedFixtures(fxi, channel, 0, false);
         }
     }
 }
@@ -1639,4 +1673,127 @@ void SceneEditor::slotGoToPreviousTab()
     else
         m_currentTab--;
     m_tab->setCurrentIndex(m_currentTab);
+}
+
+/*********************************************************************
+ * Link identical fixtures (QLC+DAN)
+ *********************************************************************/
+
+bool SceneEditor::fixturesAreIdentical(Fixture *a, Fixture *b)
+{
+    if (a == NULL || b == NULL || a == b)
+        return false;
+
+    if (a->channels() != b->channels())
+        return false;
+
+    QLCFixtureDef *defA = a->fixtureDef();
+    QLCFixtureDef *defB = b->fixtureDef();
+    if (defA == NULL || defB == NULL)
+        return false;
+
+    if (defA->manufacturer() != defB->manufacturer() || defA->model() != defB->model())
+        return false;
+
+    QLCFixtureMode *modeA = a->fixtureMode();
+    QLCFixtureMode *modeB = b->fixtureMode();
+    if (modeA == NULL || modeB == NULL)
+        return modeA == modeB;
+
+    return modeA->name() == modeB->name();
+}
+
+bool SceneEditor::identicalFixturesDiffer(const QList<SceneValue> &values) const
+{
+    // fixture ID -> (channel -> value)
+    QMap<quint32, QMap<quint32, uchar> > byFixture;
+    foreach (SceneValue sv, values)
+        byFixture[sv.fxi][sv.channel] = sv.value;
+
+    QList<quint32> ids = byFixture.keys();
+    for (int i = 0; i < ids.count(); i++)
+    {
+        Fixture *a = m_doc->fixture(ids.at(i));
+        for (int j = i + 1; j < ids.count(); j++)
+        {
+            Fixture *b = m_doc->fixture(ids.at(j));
+            if (fixturesAreIdentical(a, b) == false)
+                continue;
+
+            const QMap<quint32, uchar> &va = byFixture[ids.at(i)];
+            const QMap<quint32, uchar> &vb = byFixture[ids.at(j)];
+            QMapIterator<quint32, uchar> it(va);
+            while (it.hasNext())
+            {
+                it.next();
+                if (vb.contains(it.key()) && vb.value(it.key()) != it.value())
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+void SceneEditor::setLinkDefaultFromSteps(const QList<ChaserStep> &steps)
+{
+    if (m_linkFixturesCheck == NULL)
+        return;
+
+    // respect the choice the user already made for this scene
+    if (m_scene->uiStateValue(UI_STATE_LINK_FIXTURES).isValid())
+        return;
+
+    foreach (ChaserStep step, steps)
+    {
+        if (identicalFixturesDiffer(step.values))
+        {
+            m_linkFixturesCheck->blockSignals(true);
+            m_linkFixturesCheck->setChecked(false);
+            m_linkFixturesCheck->blockSignals(false);
+            return;
+        }
+    }
+}
+
+void SceneEditor::applyToLinkedFixtures(quint32 fxi, quint32 channel, uchar value, bool enabled)
+{
+    if (m_linkSuspended > 0 || m_linkFixturesCheck == NULL || m_linkFixturesCheck->isChecked() == false)
+        return;
+
+    Fixture *source = m_doc->fixture(fxi);
+    if (source == NULL)
+        return;
+
+    // the changes made here come back through slotValueChanged/slotChecked:
+    // they update the scene and the selected step, but are not copied again
+    m_linkSuspended++;
+
+    QMapIterator<quint32, FixtureConsole*> it(m_consoleList);
+    while (it.hasNext())
+    {
+        it.next();
+        if (it.key() == fxi || it.value() == NULL)
+            continue;
+
+        if (fixturesAreIdentical(source, m_doc->fixture(it.key())) == false)
+            continue;
+
+        if (enabled)
+        {
+            it.value()->setChecked(true, channel);
+            it.value()->setValue(channel, value);
+        }
+        else
+        {
+            it.value()->setChecked(false, channel);
+        }
+    }
+
+    m_linkSuspended--;
+}
+
+void SceneEditor::slotLinkFixturesToggled(bool checked)
+{
+    // remember the choice for this scene while QLC+ is running
+    m_scene->setUiStateValue(UI_STATE_LINK_FIXTURES, checked);
 }

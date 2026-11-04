@@ -913,6 +913,8 @@ void FunctionManager::editFunction(Function* function)
             if (sfunc->type() == Function::SceneType)
             {
                 m_scene_editor = new SceneEditor(m_vsplitter->widget(1), qobject_cast<Scene*> (sfunc), m_doc, false);
+                // QLC+DAN: don't link identical fixtures in panning sequences
+                qobject_cast<SceneEditor*>(m_scene_editor)->setLinkDefaultFromSteps(sequence->steps());
                 connect(this, SIGNAL(functionManagerActive(bool)),
                         m_scene_editor, SLOT(slotFunctionManagerActive(bool)));
                 /** Signal from chaser editor to scene editor. When a step is clicked apply values immediately */

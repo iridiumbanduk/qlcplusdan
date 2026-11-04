@@ -538,6 +538,10 @@ void ShowManager::showRightEditor(Function *function)
             ChaserEditor *editor = qobject_cast<ChaserEditor*>(m_currentEditor);
             editor->setBeatTempo(currentBeatTempo());
 
+            // QLC+DAN: don't link identical fixtures in panning sequences
+            if (m_sceneEditor != NULL)
+                qobject_cast<SceneEditor*>(m_sceneEditor)->setLinkDefaultFromSteps(sequence->steps());
+
             editor->showOrderAndDirection(false);
 
             /** Signal from chaser editor to scene editor.
