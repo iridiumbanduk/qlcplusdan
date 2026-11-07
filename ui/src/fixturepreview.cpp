@@ -317,12 +317,21 @@ void FixturePreview::simulate(const PreviewPack *pack, const QByteArray &v, Prev
         st.rgbFrame = fmod(st.rgbFrame + dt * clip->fps * rate, clip->frames);
         const uchar *f = reinterpret_cast<const uchar *>(clip->data.constData()) + int(st.rgbFrame) * 32 * 3;
         QColor bg = pack->background(val("background"));
+        // filmed: when any colour fader is up, the effect's pattern is drawn in the
+        // fader colour (keeping the effect's own brightness steps) instead of its own colours
+        int fr = val("red"), fg = val("green"), fb = val("blue");
+        bool tinted = (fr + fg + fb) > 0;
         for (int s = 0; s < 32; s++)
         {
             int r = f[s * 3], g = f[s * 3 + 1], b = f[s * 3 + 2];
             // the background colour fills every section the effect leaves dark
             if (r + g + b < 30)
                 st.rgb[s] = bg;
+            else if (tinted)
+            {
+                double level = qMax(r, qMax(g, b)) / 255.0;
+                st.rgb[s] = QColor(int(fr * level), int(fg * level), int(fb * level));
+            }
             else
                 st.rgb[s] = QColor(r, g, b);
         }
@@ -349,10 +358,23 @@ void FixturePreview::simulate(const PreviewPack *pack, const QByteArray &v, Prev
                       PreviewPack::curve(pack->m_awSpeed, aw->recSpeed, true);
         st.awFrame = fmod(st.awFrame + dt * aw->fps * rate, aw->frames);
         const uchar *f = reinterpret_cast<const uchar *>(aw->data.constData()) + int(st.awFrame) * 16 * 2;
+        // filmed: with the amber and/or white fader up, the whole pattern (amber and white
+        // parts together) runs only in those colours, at the faders' levels
+        int fa = val("amber"), fw = val("white");
         for (int r = 0; r < 16; r++)
         {
-            st.amber[r] = f[r * 2] / 255.0;
-            st.white[r] = f[r * 2 + 1] / 255.0;
+            double a = f[r * 2] / 255.0, w = f[r * 2 + 1] / 255.0;
+            if (fa + fw > 0)
+            {
+                double level = qMax(a, w);
+                st.amber[r] = level * fa / 255.0;
+                st.white[r] = level * fw / 255.0;
+            }
+            else
+            {
+                st.amber[r] = a;
+                st.white[r] = w;
+            }
         }
     }
     else
