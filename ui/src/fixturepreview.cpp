@@ -21,6 +21,9 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QCloseEvent>
+#include <QContextMenuEvent>
+#include <QActionGroup>
+#include <QMenu>
 #include <QSettings>
 #include <QPainter>
 #include <QTimer>
@@ -38,6 +41,7 @@
 #include "doc.h"
 
 #define SETTINGS_GEOMETRY "fixturepreview/geometry"
+#define SETTINGS_GAMMA "fixturepreview/gamma"
 #define TICK_MS 33
 
 /*****************************************************************************
@@ -196,12 +200,14 @@ FixturePreview::FixturePreview(QWidget *parent, Doc *doc)
     : QWidget(parent, Qt::Tool)
     , m_doc(doc)
     , m_lastMs(0)
+    , m_gamma(2.2)
 {
     setWindowTitle(tr("Fixture preview"));
     setAttribute(Qt::WA_OpaquePaintEvent);
     setMinimumSize(160, 240);
 
     QSettings settings;
+    m_gamma = settings.value(SETTINGS_GAMMA, 2.2).toDouble();
     QVariant geo = settings.value(SETTINGS_GEOMETRY);
     if (geo.isValid())
         restoreGeometry(geo.toByteArray());
@@ -417,13 +423,43 @@ void FixturePreview::simulate(const PreviewPack *pack, const QByteArray &v, Prev
     }
 }
 
-static QColor ledColor(const QColor &c)
+QColor FixturePreview::ledColor(const QColor &c) const
 {
-    // lift dim colours slightly so they stay visible, and show unlit LEDs as dark grey
-    if (c.red() + c.green() + c.blue() < 6)
+    // unlit LEDs are shown as dark grey
+    if (c.red() + c.green() + c.blue() < 3)
         return QColor(28, 28, 32);
-    auto lift = [](int x) { return x == 0 ? 0 : int(40 + x * 215 / 255.0); };
-    return QColor(lift(c.red()), lift(c.green()), lift(c.blue()));
+    // LEDs put out light in proportion to the DMX value, but both eyes and screens are
+    // far from linear: a dim LED looks much brighter in a room than the same value drawn
+    // on screen. The curve maps light output to a screen value that looks similar.
+    auto curve = [this](int x) { return x <= 0 ? 0 : qBound(0, int(qRound(255.0 * qPow(x / 255.0, 1.0 / m_gamma))), 255); };
+    return QColor(curve(c.red()), curve(c.green()), curve(c.blue()));
+}
+
+void FixturePreview::contextMenuEvent(QContextMenuEvent *e)
+{
+    QMenu menu(this);
+    menu.addSection(tr("Brightness of dim LEDs"));
+    QActionGroup group(&menu);
+    const QList<QPair<QString, double>> curves = {
+        { tr("As DMX values (linear)"), 1.0 },
+        { tr("Natural (like the real LEDs)"), 2.2 },
+        { tr("Brighter"), 3.0 } };
+    for (const auto &c : curves)
+    {
+        QAction *a = menu.addAction(c.first);
+        a->setCheckable(true);
+        a->setChecked(qFuzzyCompare(m_gamma, c.second));
+        a->setData(c.second);
+        group.addAction(a);
+    }
+    QAction *chosen = menu.exec(e->globalPos());
+    if (chosen != NULL)
+    {
+        m_gamma = chosen->data().toDouble();
+        QSettings settings;
+        settings.setValue(SETTINGS_GAMMA, m_gamma);
+        update();
+    }
 }
 
 void FixturePreview::drawSTB448(QPainter &p, const QRectF &r, const PreviewState &st)

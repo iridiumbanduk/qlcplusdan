@@ -99,6 +99,7 @@ protected:
     FixturePreview(QWidget *parent, Doc *doc);
     void paintEvent(QPaintEvent *e) override;
     void closeEvent(QCloseEvent *e) override;
+    void contextMenuEvent(QContextMenuEvent *e) override;
     void hideEvent(QHideEvent *e) override;
     void showEvent(QShowEvent *e) override;
 
@@ -112,6 +113,8 @@ private:
     void loadPacks();
     void simulate(const PreviewPack *pack, const QByteArray &values, PreviewState &st, double dt);
     void drawSTB448(QPainter &p, const QRectF &r, const PreviewState &st);
+    /** Convert an LED's light output (0-255, linear) to a screen colour */
+    QColor ledColor(const QColor &c) const;
 
 private:
     static FixturePreview *s_instance;
@@ -124,6 +127,8 @@ private:
     QHash<quint32, PreviewState> m_states;
     /** fixtures drawn on the last tick: ID, pack */
     QList<QPair<quint32, const PreviewPack *>> m_shown;
+    /** Brightness curve: 1.0 = linear (as DMX values), 2.2 = natural, 3.0 = brighter */
+    double m_gamma;
 };
 
 #endif
