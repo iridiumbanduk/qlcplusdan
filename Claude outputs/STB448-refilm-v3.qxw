@@ -1,0 +1,933 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace>
+<Workspace xmlns="http://www.qlcplus.org/Workspace" CurrentWindow="ShowManager">
+ <Creator>
+  <Name>QLC+DAN</Name>
+  <Version>4.14.5</Version>
+  <Author>Claude (generated)</Author>
+ </Creator>
+ <Engine>
+  <InputOutputMap>
+   <BeatGenerator BeatType="Disabled" BPM="0"/>
+   <NetworkServer Type="Native" AutoStart="False" Name="" Password=""/>
+   <Universe Name="Universe 1" ID="0"/>
+   <Universe Name="Universe 2" ID="1"/>
+   <Universe Name="Universe 3" ID="2"/>
+   <Universe Name="Universe 4" ID="3"/>
+  </InputOutputMap>
+  <Fixture>
+   <Manufacturer>beamZ</Manufacturer>
+   <Model>STB448 Strobe Bar RGBAW</Model>
+   <Mode>13 Channel</Mode>
+   <ID>0</ID>
+   <Name>STB448 (13 ch, address 1)</Name>
+   <Universe>0</Universe>
+   <Address>0</Address>
+   <Channels>13</Channels>
+  </Fixture>
+  <Function ID="0" Type="Scene" Name="Film - gap (dark)">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,0,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="1" Type="Chaser" Name="Refilm part A - calibration + RGB effects 1-34 (speed 230)">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <Direction>Forward</Direction>
+   <RunOrder>SingleShot</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
+   <Step Number="0" FadeIn="0" Hold="3000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="1" FadeIn="0" Hold="3000" FadeOut="0" Note="START marker white">2</Step>
+   <Step Number="2" FadeIn="0" Hold="2000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="3" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 255">3</Step>
+   <Step Number="4" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="5" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 255">4</Step>
+   <Step Number="6" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="7" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 255">5</Step>
+   <Step Number="8" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="9" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 255">6</Step>
+   <Step Number="10" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="11" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 255">7</Step>
+   <Step Number="12" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="13" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 255">8</Step>
+   <Step Number="14" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="15" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 255">9</Step>
+   <Step Number="16" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="17" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 255">10</Step>
+   <Step Number="18" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="19" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 255">11</Step>
+   <Step Number="20" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="21" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 128">12</Step>
+   <Step Number="22" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="23" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 128">13</Step>
+   <Step Number="24" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="25" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 128">14</Step>
+   <Step Number="26" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="27" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 128">15</Step>
+   <Step Number="28" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="29" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 128">16</Step>
+   <Step Number="30" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="31" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 128">17</Step>
+   <Step Number="32" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="33" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 128">18</Step>
+   <Step Number="34" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="35" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 128">19</Step>
+   <Step Number="36" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="37" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 128">20</Step>
+   <Step Number="38" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="39" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 1 (value 1, speed 230)">21</Step>
+   <Step Number="40" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="41" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 2 (value 4, speed 230)">22</Step>
+   <Step Number="42" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="43" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 3 (value 7, speed 230)">23</Step>
+   <Step Number="44" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="45" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 4 (value 10, speed 230)">24</Step>
+   <Step Number="46" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="47" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 5 (value 13, speed 230)">25</Step>
+   <Step Number="48" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="49" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 6 (value 16, speed 230)">26</Step>
+   <Step Number="50" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="51" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 7 (value 19, speed 230)">27</Step>
+   <Step Number="52" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="53" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 8 (value 22, speed 230)">28</Step>
+   <Step Number="54" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="55" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 9 (value 25, speed 230)">29</Step>
+   <Step Number="56" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="57" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 10 (value 28, speed 230)">30</Step>
+   <Step Number="58" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="59" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 11 (value 31, speed 230)">31</Step>
+   <Step Number="60" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="61" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 12 (value 34, speed 230)">32</Step>
+   <Step Number="62" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="63" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 13 (value 37, speed 230)">33</Step>
+   <Step Number="64" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="65" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 14 (value 40, speed 230)">34</Step>
+   <Step Number="66" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="67" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 15 (value 43, speed 230)">35</Step>
+   <Step Number="68" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="69" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 16 (value 46, speed 230)">36</Step>
+   <Step Number="70" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="71" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 17 (value 49, speed 230)">37</Step>
+   <Step Number="72" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="73" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 18 (value 52, speed 230)">38</Step>
+   <Step Number="74" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="75" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 19 (value 55, speed 230)">39</Step>
+   <Step Number="76" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="77" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 20 (value 58, speed 230)">40</Step>
+   <Step Number="78" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="79" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 21 (value 61, speed 230)">41</Step>
+   <Step Number="80" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="81" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 22 (value 64, speed 230)">42</Step>
+   <Step Number="82" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="83" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 23 (value 67, speed 230)">43</Step>
+   <Step Number="84" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="85" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 24 (value 70, speed 230)">44</Step>
+   <Step Number="86" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="87" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 25 (value 73, speed 230)">45</Step>
+   <Step Number="88" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="89" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 26 (value 76, speed 230)">46</Step>
+   <Step Number="90" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="91" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 27 (value 79, speed 230)">47</Step>
+   <Step Number="92" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="93" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 28 (value 82, speed 230)">48</Step>
+   <Step Number="94" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="95" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 29 (value 85, speed 230)">49</Step>
+   <Step Number="96" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="97" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 30 (value 88, speed 230)">50</Step>
+   <Step Number="98" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="99" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 31 (value 91, speed 230)">51</Step>
+   <Step Number="100" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="101" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 32 (value 94, speed 230)">52</Step>
+   <Step Number="102" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="103" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 33 (value 97, speed 230)">53</Step>
+   <Step Number="104" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="105" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 34 (value 100, speed 230)">54</Step>
+   <Step Number="106" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="107" FadeIn="0" Hold="3000" FadeOut="0" Note="END dark">0</Step>
+  </Function>
+  <Function ID="2" Type="Scene" Name="Marker - white">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="3" Type="Scene" Name="Cal red 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="4" Type="Scene" Name="Cal green 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="5" Type="Scene" Name="Cal blue 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="6" Type="Scene" Name="Cal yellow 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="7" Type="Scene" Name="Cal cyan 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="8" Type="Scene" Name="Cal magenta 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="9" Type="Scene" Name="Cal RGB white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="10" Type="Scene" Name="Cal amber 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,255,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="11" Type="Scene" Name="Cal white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="12" Type="Scene" Name="Cal red 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="13" Type="Scene" Name="Cal green 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="14" Type="Scene" Name="Cal blue 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="15" Type="Scene" Name="Cal yellow 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="16" Type="Scene" Name="Cal cyan 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="17" Type="Scene" Name="Cal magenta 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="18" Type="Scene" Name="Cal RGB white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="19" Type="Scene" Name="Cal amber 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,128,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="20" Type="Scene" Name="Cal white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,128,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="21" Type="Scene" Name="Fast RGB effect 01">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,1,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="22" Type="Scene" Name="Fast RGB effect 02">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,4,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="23" Type="Scene" Name="Fast RGB effect 03">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,7,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="24" Type="Scene" Name="Fast RGB effect 04">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,10,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="25" Type="Scene" Name="Fast RGB effect 05">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,13,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="26" Type="Scene" Name="Fast RGB effect 06">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,16,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="27" Type="Scene" Name="Fast RGB effect 07">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,19,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="28" Type="Scene" Name="Fast RGB effect 08">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,22,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="29" Type="Scene" Name="Fast RGB effect 09">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,25,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="30" Type="Scene" Name="Fast RGB effect 10">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,28,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="31" Type="Scene" Name="Fast RGB effect 11">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,31,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="32" Type="Scene" Name="Fast RGB effect 12">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,34,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="33" Type="Scene" Name="Fast RGB effect 13">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,37,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="34" Type="Scene" Name="Fast RGB effect 14">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,40,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="35" Type="Scene" Name="Fast RGB effect 15">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,43,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="36" Type="Scene" Name="Fast RGB effect 16">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,46,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="37" Type="Scene" Name="Fast RGB effect 17">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,49,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="38" Type="Scene" Name="Fast RGB effect 18">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,52,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="39" Type="Scene" Name="Fast RGB effect 19">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,55,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="40" Type="Scene" Name="Fast RGB effect 20">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,58,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="41" Type="Scene" Name="Fast RGB effect 21">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,61,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="42" Type="Scene" Name="Fast RGB effect 22">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,64,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="43" Type="Scene" Name="Fast RGB effect 23">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,67,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="44" Type="Scene" Name="Fast RGB effect 24">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,70,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="45" Type="Scene" Name="Fast RGB effect 25">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,73,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="46" Type="Scene" Name="Fast RGB effect 26">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,76,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="47" Type="Scene" Name="Fast RGB effect 27">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,79,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="48" Type="Scene" Name="Fast RGB effect 28">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,82,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="49" Type="Scene" Name="Fast RGB effect 29">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,85,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="50" Type="Scene" Name="Fast RGB effect 30">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,88,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="51" Type="Scene" Name="Fast RGB effect 31">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,91,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="52" Type="Scene" Name="Fast RGB effect 32">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,94,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="53" Type="Scene" Name="Fast RGB effect 33">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,97,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="54" Type="Scene" Name="Fast RGB effect 34">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,100,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="55" Type="Show" Name="Refilm part A - calibration + RGB effects 1-34 (speed 230)">
+   <TimeDivision Type="Time" BPM="120"/>
+   <Track ID="0" Name="STB448" isMute="0">
+    <ShowFunction ID="1" StartTime="0" Duration="815000"/>
+   </Track>
+  </Function>
+  <Function ID="56" Type="Chaser" Name="Refilm part B - calibration + RGB effects 35-68, 106, auto (speed 230)">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <Direction>Forward</Direction>
+   <RunOrder>SingleShot</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
+   <Step Number="0" FadeIn="0" Hold="3000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="1" FadeIn="0" Hold="3000" FadeOut="0" Note="START marker white">57</Step>
+   <Step Number="2" FadeIn="0" Hold="2000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="3" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 255">58</Step>
+   <Step Number="4" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="5" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 255">59</Step>
+   <Step Number="6" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="7" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 255">60</Step>
+   <Step Number="8" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="9" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 255">61</Step>
+   <Step Number="10" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="11" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 255">62</Step>
+   <Step Number="12" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="13" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 255">63</Step>
+   <Step Number="14" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="15" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 255">64</Step>
+   <Step Number="16" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="17" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 255">65</Step>
+   <Step Number="18" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="19" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 255">66</Step>
+   <Step Number="20" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="21" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 128">67</Step>
+   <Step Number="22" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="23" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 128">68</Step>
+   <Step Number="24" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="25" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 128">69</Step>
+   <Step Number="26" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="27" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 128">70</Step>
+   <Step Number="28" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="29" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 128">71</Step>
+   <Step Number="30" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="31" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 128">72</Step>
+   <Step Number="32" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="33" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 128">73</Step>
+   <Step Number="34" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="35" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 128">74</Step>
+   <Step Number="36" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="37" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 128">75</Step>
+   <Step Number="38" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="39" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 35 (value 103, speed 230)">76</Step>
+   <Step Number="40" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="41" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 36 (value 109, speed 230)">77</Step>
+   <Step Number="42" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="43" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 37 (value 112, speed 230)">78</Step>
+   <Step Number="44" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="45" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 38 (value 115, speed 230)">79</Step>
+   <Step Number="46" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="47" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 39 (value 118, speed 230)">80</Step>
+   <Step Number="48" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="49" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 40 (value 121, speed 230)">81</Step>
+   <Step Number="50" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="51" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 41 (value 124, speed 230)">82</Step>
+   <Step Number="52" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="53" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 42 (value 127, speed 230)">83</Step>
+   <Step Number="54" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="55" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 43 (value 130, speed 230)">84</Step>
+   <Step Number="56" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="57" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 44 (value 133, speed 230)">85</Step>
+   <Step Number="58" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="59" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 45 (value 136, speed 230)">86</Step>
+   <Step Number="60" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="61" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 46 (value 139, speed 230)">87</Step>
+   <Step Number="62" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="63" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 47 (value 142, speed 230)">88</Step>
+   <Step Number="64" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="65" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 48 (value 145, speed 230)">89</Step>
+   <Step Number="66" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="67" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 49 (value 148, speed 230)">90</Step>
+   <Step Number="68" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="69" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 50 (value 151, speed 230)">91</Step>
+   <Step Number="70" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="71" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 51 (value 154, speed 230)">92</Step>
+   <Step Number="72" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="73" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 52 (value 157, speed 230)">93</Step>
+   <Step Number="74" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="75" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 53 (value 160, speed 230)">94</Step>
+   <Step Number="76" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="77" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 54 (value 163, speed 230)">95</Step>
+   <Step Number="78" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="79" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 55 (value 166, speed 230)">96</Step>
+   <Step Number="80" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="81" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 56 (value 169, speed 230)">97</Step>
+   <Step Number="82" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="83" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 57 (value 172, speed 230)">98</Step>
+   <Step Number="84" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="85" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 58 (value 175, speed 230)">99</Step>
+   <Step Number="86" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="87" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 59 (value 178, speed 230)">100</Step>
+   <Step Number="88" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="89" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 60 (value 181, speed 230)">101</Step>
+   <Step Number="90" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="91" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 61 (value 184, speed 230)">102</Step>
+   <Step Number="92" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="93" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 62 (value 187, speed 230)">103</Step>
+   <Step Number="94" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="95" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 63 (value 190, speed 230)">104</Step>
+   <Step Number="96" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="97" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 64 (value 193, speed 230)">105</Step>
+   <Step Number="98" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="99" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 65 (value 196, speed 230)">106</Step>
+   <Step Number="100" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="101" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 66 (value 199, speed 230)">107</Step>
+   <Step Number="102" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="103" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 67 (value 202, speed 230)">108</Step>
+   <Step Number="104" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="105" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect 68 (value 205, speed 230)">109</Step>
+   <Step Number="106" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="107" FadeIn="0" Hold="20000" FadeOut="0" Note="RGB effect value 106 (speed 230)">110</Step>
+   <Step Number="108" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="109" FadeIn="0" Hold="30000" FadeOut="0" Note="RGB auto run (value 208, speed 230)">111</Step>
+   <Step Number="110" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="111" FadeIn="0" Hold="3000" FadeOut="0" Note="END dark">0</Step>
+  </Function>
+  <Function ID="57" Type="Scene" Name="Marker - white">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="58" Type="Scene" Name="Cal red 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="59" Type="Scene" Name="Cal green 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="60" Type="Scene" Name="Cal blue 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="61" Type="Scene" Name="Cal yellow 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="62" Type="Scene" Name="Cal cyan 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="63" Type="Scene" Name="Cal magenta 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="64" Type="Scene" Name="Cal RGB white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="65" Type="Scene" Name="Cal amber 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,255,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="66" Type="Scene" Name="Cal white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="67" Type="Scene" Name="Cal red 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="68" Type="Scene" Name="Cal green 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="69" Type="Scene" Name="Cal blue 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="70" Type="Scene" Name="Cal yellow 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="71" Type="Scene" Name="Cal cyan 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="72" Type="Scene" Name="Cal magenta 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="73" Type="Scene" Name="Cal RGB white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="74" Type="Scene" Name="Cal amber 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,128,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="75" Type="Scene" Name="Cal white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,128,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="76" Type="Scene" Name="Fast RGB effect 35">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,103,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="77" Type="Scene" Name="Fast RGB effect 36">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,109,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="78" Type="Scene" Name="Fast RGB effect 37">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,112,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="79" Type="Scene" Name="Fast RGB effect 38">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,115,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="80" Type="Scene" Name="Fast RGB effect 39">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,118,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="81" Type="Scene" Name="Fast RGB effect 40">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,121,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="82" Type="Scene" Name="Fast RGB effect 41">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,124,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="83" Type="Scene" Name="Fast RGB effect 42">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,127,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="84" Type="Scene" Name="Fast RGB effect 43">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,130,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="85" Type="Scene" Name="Fast RGB effect 44">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,133,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="86" Type="Scene" Name="Fast RGB effect 45">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,136,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="87" Type="Scene" Name="Fast RGB effect 46">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,139,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="88" Type="Scene" Name="Fast RGB effect 47">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,142,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="89" Type="Scene" Name="Fast RGB effect 48">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,145,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="90" Type="Scene" Name="Fast RGB effect 49">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,148,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="91" Type="Scene" Name="Fast RGB effect 50">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,151,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="92" Type="Scene" Name="Fast RGB effect 51">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,154,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="93" Type="Scene" Name="Fast RGB effect 52">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,157,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="94" Type="Scene" Name="Fast RGB effect 53">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,160,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="95" Type="Scene" Name="Fast RGB effect 54">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,163,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="96" Type="Scene" Name="Fast RGB effect 55">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,166,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="97" Type="Scene" Name="Fast RGB effect 56">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,169,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="98" Type="Scene" Name="Fast RGB effect 57">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,172,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="99" Type="Scene" Name="Fast RGB effect 58">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,175,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="100" Type="Scene" Name="Fast RGB effect 59">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,178,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="101" Type="Scene" Name="Fast RGB effect 60">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,181,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="102" Type="Scene" Name="Fast RGB effect 61">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,184,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="103" Type="Scene" Name="Fast RGB effect 62">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,187,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="104" Type="Scene" Name="Fast RGB effect 63">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,190,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="105" Type="Scene" Name="Fast RGB effect 64">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,193,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="106" Type="Scene" Name="Fast RGB effect 65">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,196,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="107" Type="Scene" Name="Fast RGB effect 66">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,199,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="108" Type="Scene" Name="Fast RGB effect 67">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,202,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="109" Type="Scene" Name="Fast RGB effect 68">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,205,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="110" Type="Scene" Name="Fast RGB value 106">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,106,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="111" Type="Scene" Name="Fast RGB auto run">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,208,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="112" Type="Show" Name="Refilm part B - calibration + RGB effects 35-68, 106, auto (speed 230)">
+   <TimeDivision Type="Time" BPM="120"/>
+   <Track ID="0" Name="STB448" isMute="0">
+    <ShowFunction ID="56" StartTime="0" Duration="867000"/>
+   </Track>
+  </Function>
+  <Function ID="113" Type="Chaser" Name="Refilm part C - calibration + slow amber/white effects (speed 192) + speed check">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <Direction>Forward</Direction>
+   <RunOrder>SingleShot</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
+   <Step Number="0" FadeIn="0" Hold="3000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="1" FadeIn="0" Hold="3000" FadeOut="0" Note="START marker white">114</Step>
+   <Step Number="2" FadeIn="0" Hold="2000" FadeOut="0" Note="START dark">0</Step>
+   <Step Number="3" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 255">115</Step>
+   <Step Number="4" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="5" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 255">116</Step>
+   <Step Number="6" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="7" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 255">117</Step>
+   <Step Number="8" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="9" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 255">118</Step>
+   <Step Number="10" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="11" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 255">119</Step>
+   <Step Number="12" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="13" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 255">120</Step>
+   <Step Number="14" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="15" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 255">121</Step>
+   <Step Number="16" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="17" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 255">122</Step>
+   <Step Number="18" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="19" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 255">123</Step>
+   <Step Number="20" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="21" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL red 128">124</Step>
+   <Step Number="22" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="23" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL green 128">125</Step>
+   <Step Number="24" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="25" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL blue 128">126</Step>
+   <Step Number="26" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="27" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL yellow 128">127</Step>
+   <Step Number="28" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="29" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL cyan 128">128</Step>
+   <Step Number="30" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="31" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL magenta 128">129</Step>
+   <Step Number="32" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="33" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL RGB white 128">130</Step>
+   <Step Number="34" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="35" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL amber 128">131</Step>
+   <Step Number="36" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="37" FadeIn="0" Hold="4000" FadeOut="0" Note="CAL white 128">132</Step>
+   <Step Number="38" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="39" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 3 (value 21, speed 192)">133</Step>
+   <Step Number="40" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="41" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 4 (value 27, speed 192)">134</Step>
+   <Step Number="42" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="43" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 5 (value 33, speed 192)">135</Step>
+   <Step Number="44" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="45" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 6 (value 39, speed 192)">136</Step>
+   <Step Number="46" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="47" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 7 (value 45, speed 192)">137</Step>
+   <Step Number="48" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="49" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 12 (value 75, speed 192)">138</Step>
+   <Step Number="50" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="51" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 13 (value 81, speed 192)">139</Step>
+   <Step Number="52" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="53" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 16 (value 99, speed 192)">140</Step>
+   <Step Number="54" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="55" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 17 (value 105, speed 192)">141</Step>
+   <Step Number="56" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="57" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 18 (value 111, speed 192)">142</Step>
+   <Step Number="58" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="59" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 19 (value 117, speed 192)">143</Step>
+   <Step Number="60" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="61" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 26 (value 159, speed 192)">144</Step>
+   <Step Number="62" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="63" FadeIn="0" Hold="20000" FadeOut="0" Note="ACW effect 29 (value 177, speed 192)">145</Step>
+   <Step Number="64" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="65" FadeIn="0" Hold="30000" FadeOut="0" Note="ACW auto effect (value 238, speed 192)">146</Step>
+   <Step Number="66" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="67" FadeIn="0" Hold="20000" FadeOut="0" Note="SPEEDCHECK RGB effect 2 at speed 128">147</Step>
+   <Step Number="68" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="69" FadeIn="0" Hold="20000" FadeOut="0" Note="SPEEDCHECK RGB effect 2 at speed 230">148</Step>
+   <Step Number="70" FadeIn="0" Hold="1000" FadeOut="0" Note="gap">0</Step>
+   <Step Number="71" FadeIn="0" Hold="3000" FadeOut="0" Note="END dark">0</Step>
+  </Function>
+  <Function ID="114" Type="Scene" Name="Marker - white">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="115" Type="Scene" Name="Cal red 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="116" Type="Scene" Name="Cal green 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="117" Type="Scene" Name="Cal blue 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="118" Type="Scene" Name="Cal yellow 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="119" Type="Scene" Name="Cal cyan 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="120" Type="Scene" Name="Cal magenta 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,0,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="121" Type="Scene" Name="Cal RGB white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,255,4,255,5,255,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="122" Type="Scene" Name="Cal amber 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,255,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="123" Type="Scene" Name="Cal white 255">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,255,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="124" Type="Scene" Name="Cal red 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="125" Type="Scene" Name="Cal green 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="126" Type="Scene" Name="Cal blue 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="127" Type="Scene" Name="Cal yellow 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,0,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="128" Type="Scene" Name="Cal cyan 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="129" Type="Scene" Name="Cal magenta 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,0,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="130" Type="Scene" Name="Cal RGB white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,128,4,128,5,128,6,0,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="131" Type="Scene" Name="Cal amber 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,128,7,0,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="132" Type="Scene" Name="Cal white 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,128,8,0,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="133" Type="Scene" Name="Fast ACW effect 03">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,21,12,192</FixtureVal>
+  </Function>
+  <Function ID="134" Type="Scene" Name="Fast ACW effect 04">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,27,12,192</FixtureVal>
+  </Function>
+  <Function ID="135" Type="Scene" Name="Fast ACW effect 05">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,33,12,192</FixtureVal>
+  </Function>
+  <Function ID="136" Type="Scene" Name="Fast ACW effect 06">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,39,12,192</FixtureVal>
+  </Function>
+  <Function ID="137" Type="Scene" Name="Fast ACW effect 07">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,45,12,192</FixtureVal>
+  </Function>
+  <Function ID="138" Type="Scene" Name="Fast ACW effect 12">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,75,12,192</FixtureVal>
+  </Function>
+  <Function ID="139" Type="Scene" Name="Fast ACW effect 13">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,81,12,192</FixtureVal>
+  </Function>
+  <Function ID="140" Type="Scene" Name="Fast ACW effect 16">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,99,12,192</FixtureVal>
+  </Function>
+  <Function ID="141" Type="Scene" Name="Fast ACW effect 17">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,105,12,192</FixtureVal>
+  </Function>
+  <Function ID="142" Type="Scene" Name="Fast ACW effect 18">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,111,12,192</FixtureVal>
+  </Function>
+  <Function ID="143" Type="Scene" Name="Fast ACW effect 19">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,117,12,192</FixtureVal>
+  </Function>
+  <Function ID="144" Type="Scene" Name="Fast ACW effect 26">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,159,12,192</FixtureVal>
+  </Function>
+  <Function ID="145" Type="Scene" Name="Fast ACW effect 29">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,177,12,192</FixtureVal>
+  </Function>
+  <Function ID="146" Type="Scene" Name="Fast ACW auto">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,128,10,0,11,238,12,192</FixtureVal>
+  </Function>
+  <Function ID="147" Type="Scene" Name="Speed check RGB effect 2 speed 128">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,4,9,128,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="148" Type="Scene" Name="Speed check RGB effect 2 speed 230">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="0">0,30,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,4,9,230,10,0,11,0,12,128</FixtureVal>
+  </Function>
+  <Function ID="149" Type="Show" Name="Refilm part C - calibration + slow amber/white effects (speed 192) + speed check">
+   <TimeDivision Type="Time" BPM="120"/>
+   <Track ID="0" Name="STB448" isMute="0">
+    <ShowFunction ID="113" StartTime="0" Duration="447000"/>
+   </Track>
+  </Function>
+ </Engine>
+</Workspace>

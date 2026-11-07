@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/fixturepreviews">
+        <file alias="beamZ-STB448-13ch.json">../../resources/fixturepreviews/beamZ-STB448-13ch.json</file>
+    </qresource>
+</RCC>

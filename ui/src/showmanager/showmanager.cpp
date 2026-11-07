@@ -42,6 +42,7 @@
 #include "efxeditor.h"
 #include "videoeditor.h"
 #include "showmanager.h"
+#include "fixturepreview.h"
 #include "sceneeditor.h"
 #include "timingstool.h"
 #include "qlcmacros.h"
@@ -85,6 +86,7 @@ ShowManager::ShowManager(QWidget* parent, Doc* doc)
     , m_playAction(NULL)
     , m_gridOffsetField(NULL)
     , m_gridOffsetCursorAction(NULL)
+    , m_previewAction(NULL)
 {
     Q_ASSERT(s_instance == NULL);
     s_instance = this;
@@ -389,6 +391,30 @@ void ShowManager::initToolbar()
     connect(m_gridOffsetCursorAction, SIGNAL(triggered()),
             this, SLOT(slotGridOffsetFromCursor()));
     m_toolbar->addAction(m_gridOffsetCursorAction);
+
+    /* QLC+DAN: floating fixture preview */
+    m_toolbar->addSeparator();
+    m_previewAction = new QAction(tr("Preview"), this);
+    m_previewAction->setToolTip(tr("Show a floating preview of what the fixtures are doing"));
+    m_previewAction->setCheckable(true);
+    connect(m_previewAction, SIGNAL(toggled(bool)), this, SLOT(slotPreviewToggled(bool)));
+    m_toolbar->addAction(m_previewAction);
+}
+
+void ShowManager::slotPreviewToggled(bool checked)
+{
+    FixturePreview *preview = FixturePreview::instance(window(), m_doc);
+    connect(preview, SIGNAL(visibilityChanged(bool)),
+            m_previewAction, SLOT(setChecked(bool)), Qt::UniqueConnection);
+    if (checked)
+    {
+        preview->show();
+        preview->raise();
+    }
+    else
+    {
+        preview->hide();
+    }
 }
 
 /*********************************************************************

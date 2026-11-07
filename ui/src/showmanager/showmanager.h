@@ -140,6 +140,7 @@ private:
     QSpinBox *m_bpmField;
     QSpinBox *m_gridOffsetField;
     QAction *m_gridOffsetCursorAction;
+    QAction *m_previewAction;
 
 protected slots:
     /** Slot called when the user selects a show from
@@ -174,6 +175,7 @@ protected slots:
     void slotBPMValueChanged(int value);
     void slotGridOffsetChanged(int value);
     void slotGridOffsetFromCursor();
+    void slotPreviewToggled(bool checked);
 
 private:
     /** BPM of the current Show, or 0 if it uses a Time division */

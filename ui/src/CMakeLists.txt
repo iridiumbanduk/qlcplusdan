@@ -38,6 +38,7 @@ add_library(${module_name}
     channelmodifiergraphicsview.cpp channelmodifiergraphicsview.h
     channelsselection.cpp channelsselection.h channelsselection.ui
     chasereditor.cpp chasereditor.h chasereditor.ui
+    fixturepreview.cpp fixturepreview.h
     clickandgoslider.cpp clickandgoslider.h
     clickandgowidget.cpp clickandgowidget.h
     collectioneditor.cpp collectioneditor.h collectioneditor.ui
@@ -172,9 +173,11 @@ target_link_libraries(${module_name} PUBLIC
 if(QT_VERSION_MAJOR GREATER 5)
     target_link_libraries(${module_name} PUBLIC Qt${QT_MAJOR_VERSION}::Qml)
     qt_add_resources(qlcplusui_resource_files "qlcui.qrc")
+    qt_add_resources(qlcplusui_resource_files "fixturepreviews.qrc")
 else()
     target_link_libraries(${module_name} PUBLIC Qt${QT_MAJOR_VERSION}::Script)
     qt5_add_resources(qlcplusui_resource_files "qlcui.qrc")
+    qt5_add_resources(qlcplusui_resource_files "fixturepreviews.qrc")
 endif()
 
 target_sources(${module_name} PRIVATE ${qlcplusui_resource_files})
