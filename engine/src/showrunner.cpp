@@ -352,6 +352,13 @@ void ShowRunner::write(MasterTimer *timer)
     {
         emit timeChanged(m_syncBeatsTime + (m_elapsedTime - m_syncElapsedTime));
     }
+    else if (m_beatFunctions.isEmpty())
+    {
+        // QLC+DAN fix: a BPM-divided Show with only time-based Functions never
+        // syncs to a beat (there's nothing to sync), so without this the cursor
+        // and timer stayed frozen during playback. Report plain elapsed time.
+        emit timeChanged(m_elapsedTime);
+    }
 }
 
 /************************************************************************

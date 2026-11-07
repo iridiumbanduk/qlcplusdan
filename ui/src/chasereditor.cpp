@@ -53,6 +53,7 @@
 #define COL_FADEOUT  4
 #define COL_DURATION 5
 #define COL_NOTES    6
+#define COL_DURATION_MS 7   // QLC+DAN: duration in milliseconds, shown next to Duration in beats mode
 
 ChaserEditor::ChaserEditor(QWidget* parent, Chaser* chaser, Doc* doc, bool liveMode)
     : QWidget(parent)
@@ -71,6 +72,14 @@ ChaserEditor::ChaserEditor(QWidget* parent, Chaser* chaser, Doc* doc, bool liveM
      * in beats if this Chaser is used in a BPM-based Show */
     for (int col = COL_FADEIN; col <= COL_DURATION; col++)
         m_timeHeaderTexts.append(m_tree->headerItem()->text(col));
+    /* QLC+DAN: extra "Duration (ms)" column, displayed right after Duration.
+     * Only shown when the times are displayed in beats */
+    m_tree->setColumnCount(COL_DURATION_MS + 1);
+    m_tree->headerItem()->setText(COL_DURATION_MS, tr("Duration (ms)"));
+    m_tree->headerItem()->setToolTip(COL_DURATION_MS, tr("Step duration in milliseconds. Type a number of milliseconds to change it."));
+    m_tree->header()->moveSection(m_tree->header()->visualIndex(COL_DURATION_MS),
+                                  m_tree->header()->visualIndex(COL_DURATION) + 1);
+
     m_beatTempo = findShowTempo();
     updateTimeHeaders();
 
@@ -618,6 +627,15 @@ void ChaserEditor::slotItemChanged(QTreeWidgetItem *item, int column)
 {
     QString itemText = item->text(column);
     quint32 newValue = textToSpeed(itemText);
+
+    /* QLC+DAN: the milliseconds column edits the duration; plain numbers are milliseconds */
+    if (column == COL_DURATION_MS)
+    {
+        bool ok = false;
+        uint ms = itemText.trimmed().remove("ms", Qt::CaseInsensitive).trimmed().toUInt(&ok);
+        newValue = ok ? ms : Function::stringToSpeed(itemText);
+        column = COL_DURATION;
+    }
     int idx = m_tree->indexOfTopLevelItem(item);
 
     ChaserStep step = m_chaser->steps().at(idx);
@@ -1286,6 +1304,12 @@ void ChaserEditor::updateItem(QTreeWidgetItem* item, ChaserStep& step)
         break;
     }
 
+    // QLC+DAN: the same duration in milliseconds
+    if (step.duration == Function::infiniteSpeed())
+        item->setText(COL_DURATION_MS, Function::speedToString(step.duration));
+    else
+        item->setText(COL_DURATION_MS, QString::number(step.duration));
+
     m_tree->blockSignals(false);
 }
 
@@ -1472,6 +1496,8 @@ uint ChaserEditor::textToSpeed(const QString &text) const
 void ChaserEditor::updateTimeHeaders()
 {
     QTreeWidgetItem *header = m_tree->headerItem();
+    // the milliseconds column is only useful next to times shown in beats
+    m_tree->setColumnHidden(COL_DURATION_MS, m_beatTempo <= 0);
     QString tooltip;
     if (m_beatTempo > 0)
         tooltip = tr("Times are in beats at %1 BPM (the tempo of the Show).\n"
