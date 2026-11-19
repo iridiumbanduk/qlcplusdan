@@ -127,8 +127,10 @@ private:
     QHash<quint32, PreviewState> m_states;
     /** fixtures drawn on the last tick: ID, pack */
     QList<QPair<quint32, const PreviewPack *>> m_shown;
-    /** Brightness curve: 1.0 = linear (as DMX values), 2.2 = natural, 3.0 = brighter */
+    /** Brightness curve: 1.0 = linear (as DMX values), 2.2 = natural, 3.0/4.0 = brighter */
     double m_gamma;
+    /** How much brighter the white and amber LEDs are than the RGB ones */
+    double m_awBoost;
 };
 
 #endif

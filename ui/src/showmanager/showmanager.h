@@ -31,6 +31,7 @@
 #include "show.h"
 #include "doc.h"
 
+class QToolButton;
 class QComboBox;
 class QCheckBox;
 class QSplitter;
@@ -141,6 +142,13 @@ private:
     QSpinBox *m_gridOffsetField;
     QAction *m_gridOffsetCursorAction;
     QAction *m_previewAction;
+    /* QLC+DAN: note value of the BPM grid */
+    QComboBox *m_gridDivisionCombo = nullptr;
+    /* QLC+DAN markers */
+    QToolButton *m_markersButton;
+    QAction *m_addMarkerAction;
+    QAction *m_prevMarkerAction;
+    QAction *m_nextMarkerAction;
 
 protected slots:
     /** Slot called when the user selects a show from
@@ -174,8 +182,33 @@ protected slots:
     void slotTimeDivisionTypeChanged(int idx);
     void slotBPMValueChanged(int value);
     void slotGridOffsetChanged(int value);
+    void slotGridDivisionChanged(int index);
     void slotGridOffsetFromCursor();
     void slotPreviewToggled(bool checked);
+
+    /*********************************************************************
+     * Markers (QLC+DAN)
+     *********************************************************************/
+protected slots:
+    void slotAddMarkerAtCursor();
+    void slotAddMarkerAt(quint32 time);
+    void slotPreviousMarker();
+    void slotNextMarker();
+    void slotJumpToTime(quint32 time);
+    void slotMarkerMoved(int index, quint32 time);
+    void slotRenameMarker(int index);
+    void slotDeleteMarker(int index);
+    void slotMarkerColor(int index, QColor color);
+    void slotMarkersMenuAboutToShow();
+
+private:
+    static QIcon markerIcon();
+    /** Redraw the markers of the current show */
+    void refreshMarkers();
+    /** The colour shown for marker i (markers saved without one get the palette in turn) */
+    static QColor markerColor(const QList<Show::Marker> &markers, int i);
+    /** Where new markers go and where previous/next count from */
+    quint32 markerReferenceTime() const;
 
 private:
     /** BPM of the current Show, or 0 if it uses a Time division */

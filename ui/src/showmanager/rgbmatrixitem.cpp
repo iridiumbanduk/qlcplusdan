@@ -83,7 +83,7 @@ void RGBMatrixItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     ShowItem::postPaint(painter);
 }
 
-void RGBMatrixItem::setTimeScale(int val)
+void RGBMatrixItem::setTimeScale(double val)
 {
     ShowItem::setTimeScale(val);
     calculateWidth();

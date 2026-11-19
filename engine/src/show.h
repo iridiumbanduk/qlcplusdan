@@ -20,6 +20,7 @@
 #ifndef SHOW_H
 #define SHOW_H
 
+#include <QColor>
 #include <QMutex>
 #include <QList>
 #include <QSet>
@@ -92,6 +93,12 @@ public:
     quint32 gridOffset() const;
     void setGridOffset(quint32 msec);
 
+    /** QLC+DAN: note value of the BPM grid, like a DAW's grid setting:
+     *  "bar", "1/2", "1/4" (the default), "1/8", "1/16", "1/32",
+     *  or triplets "1/4T", "1/8T", "1/16T" */
+    QString gridDivision() const;
+    void setGridDivision(const QString &division);
+
     static QString tempoToString(Show::TimeDivision type);
     static Show::TimeDivision stringToTempo(const QString& tempo);
 
@@ -99,6 +106,38 @@ private:
     TimeDivision m_timeDivisionType;
     int m_timeDivisionBPM;
     quint32 m_gridOffset;
+    QString m_gridDivision;
+
+    /*********************************************************************
+     * Markers (QLC+DAN)
+     *********************************************************************/
+public:
+    /** A named position on the timeline, like the markers in a DAW.
+     *  Design-time aid only: markers do not affect playback. */
+    struct Marker
+    {
+        quint32 time;
+        QString name;
+        /** Colour of the section from this marker to the next one */
+        QColor color;
+    };
+
+    /** All markers, sorted by time */
+    QList<Marker> markers() const;
+
+    /** Add a marker and return its index in markers() */
+    int addMarker(quint32 time, const QString &name, const QColor &color = QColor());
+
+    /** Change a marker. Returns its new index (the list stays sorted) */
+    int setMarker(int index, quint32 time, const QString &name);
+
+    void setMarkerColor(int index, const QColor &color);
+
+    void removeMarker(int index);
+
+private:
+    void sortMarkers();
+    QList<Marker> m_markers;
 
     /*********************************************************************
      * Tracks

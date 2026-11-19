@@ -107,7 +107,7 @@ void VideoItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     ShowItem::postPaint(painter);
 }
 
-void VideoItem::setTimeScale(int val)
+void VideoItem::setTimeScale(double val)
 {
     ShowItem::setTimeScale(val);
     calculateWidth();

@@ -49,7 +49,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     /** @reimp */
-    void setTimeScale(int val) override;
+    void setTimeScale(double val) override;
 
     /** @reimp */
     void setDuration(quint32 msec, bool stretch) override;

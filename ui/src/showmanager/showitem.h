@@ -78,14 +78,14 @@ public:
      *
      * @param val the timescale value (range from 1 to 10)
      */
-    virtual void setTimeScale(int val);
+    virtual void setTimeScale(double val);
 
     /**
      * @brief getTimeScale get the item time scale
      *
      * @return the item time scale value
      */
-    virtual int getTimeScale() const;
+    virtual double getTimeScale() const;
 
     /**
      * @brief setStartTime virtual method to set the item start time.
@@ -294,7 +294,7 @@ protected:
     QPointF m_pos;
 
     /** Horizontal scale to adapt width to the current time line */
-    int m_timeScale;
+    double m_timeScale;
 
     /** Track index this item belongs to */
     int m_trackIdx;

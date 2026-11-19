@@ -27,7 +27,10 @@
 #include <QComboBox>
 #include <QSplitter>
 #include <QSettings>
+#include <QToolButton>
+#include <QPainter>
 #include <QToolBar>
+#include <QMenu>
 #include <QSpinBox>
 #include <QLabel>
 #include <QDebug>
@@ -129,6 +132,20 @@ ShowManager::ShowManager(QWidget* parent, Doc* doc)
             this, SLOT(slotTrackMoved(Track*,int)));
     connect(m_showview, SIGNAL(trackDelete(Track*)),
             this, SLOT(slotTrackDelete(Track*)));
+
+    // QLC+DAN markers. Queued, because the marker items are rebuilt when they change
+    connect(m_showview, SIGNAL(markerAddRequested(quint32)),
+            this, SLOT(slotAddMarkerAt(quint32)), Qt::QueuedConnection);
+    connect(m_showview, SIGNAL(markerJumpRequested(quint32)),
+            this, SLOT(slotJumpToTime(quint32)), Qt::QueuedConnection);
+    connect(m_showview, SIGNAL(markerMoved(int,quint32)),
+            this, SLOT(slotMarkerMoved(int,quint32)), Qt::QueuedConnection);
+    connect(m_showview, SIGNAL(markerRenameRequested(int)),
+            this, SLOT(slotRenameMarker(int)), Qt::QueuedConnection);
+    connect(m_showview, SIGNAL(markerDeleteRequested(int)),
+            this, SLOT(slotDeleteMarker(int)), Qt::QueuedConnection);
+    connect(m_showview, SIGNAL(markerColorRequested(int,QColor)),
+            this, SLOT(slotMarkerColor(int,QColor)), Qt::QueuedConnection);
 
     // split the multitrack view into two (left: tracks, right: function editors)
     m_vsplitter = new QSplitter(Qt::Horizontal, this);
@@ -285,6 +302,23 @@ void ShowManager::initActions()
     connect(m_stopAction, SIGNAL(triggered(bool)),
             this, SLOT(slotStopPlayback()));
 
+    /* QLC+DAN markers */
+    m_addMarkerAction = new QAction(markerIcon(), tr("Add marker"), this);
+    m_addMarkerAction->setToolTip(tr("Add a marker at the cursor (M)"));
+    m_addMarkerAction->setShortcut(QKeySequence("M"));
+    connect(m_addMarkerAction, SIGNAL(triggered()), this, SLOT(slotAddMarkerAtCursor()));
+    addAction(m_addMarkerAction);
+
+    m_prevMarkerAction = new QAction(tr("Previous marker"), this);
+    m_prevMarkerAction->setShortcut(QKeySequence("CTRL+LEFT"));
+    connect(m_prevMarkerAction, SIGNAL(triggered()), this, SLOT(slotPreviousMarker()));
+    addAction(m_prevMarkerAction);
+
+    m_nextMarkerAction = new QAction(tr("Next marker"), this);
+    m_nextMarkerAction->setShortcut(QKeySequence("CTRL+RIGHT"));
+    connect(m_nextMarkerAction, SIGNAL(triggered()), this, SLOT(slotNextMarker()));
+    addAction(m_nextMarkerAction);
+
     m_playAction = new QAction(QIcon(":/player_play.png"),
                                  tr("&Play"), this);
     m_playAction->setShortcut(QKeySequence("SPACE"));
@@ -323,6 +357,15 @@ void ShowManager::initToolbar()
     m_toolbar->addAction(m_lockAction);
     m_toolbar->addAction(m_timingsAction);
     m_toolbar->addAction(m_snapGridAction);
+
+    /* QLC+DAN: markers button. Click adds a marker, the arrow lists them */
+    m_markersButton = new QToolButton(this);
+    m_markersButton->setPopupMode(QToolButton::MenuButtonPopup);
+    m_markersButton->setDefaultAction(m_addMarkerAction);
+    QMenu *markersMenu = new QMenu(m_markersButton);
+    connect(markersMenu, SIGNAL(aboutToShow()), this, SLOT(slotMarkersMenuAboutToShow()));
+    m_markersButton->setMenu(markersMenu);
+    m_toolbar->addWidget(m_markersButton);
     m_toolbar->addSeparator();
 
     // Time label and playback buttons
@@ -367,6 +410,35 @@ void ShowManager::initToolbar()
     m_toolbar->addWidget(m_bpmField);
     connect(m_bpmField, SIGNAL(valueChanged(int)),
             this, SLOT(slotBPMValueChanged(int)));
+
+    /* QLC+DAN: grid note value, like a DAW */
+    QLabel *gridLabel = new QLabel(tr("Grid:"));
+    gridLabel->setContentsMargins(6, 0, 2, 0);
+    m_toolbar->addWidget(gridLabel);
+    m_gridDivisionCombo = new QComboBox();
+    struct { const char *id; const char *text; const char *tip; } divisions[] = {
+        { "bar",   QT_TR_NOOP("Bar"),   QT_TR_NOOP("Whole bars") },
+        { "1/2",   QT_TR_NOOP("1/2"),   QT_TR_NOOP("Minims (half notes)") },
+        { "1/4",   QT_TR_NOOP("1/4"),   QT_TR_NOOP("Crotchets (quarter notes, one beat)") },
+        { "1/8",   QT_TR_NOOP("1/8"),   QT_TR_NOOP("Quavers (eighth notes)") },
+        { "1/16",  QT_TR_NOOP("1/16"),  QT_TR_NOOP("Semiquavers (sixteenth notes)") },
+        { "1/32",  QT_TR_NOOP("1/32"),  QT_TR_NOOP("Demisemiquavers (thirty-second notes)") },
+        { "1/4T",  QT_TR_NOOP("1/4T"),  QT_TR_NOOP("Crotchet triplets (3 per minim)") },
+        { "1/8T",  QT_TR_NOOP("1/8T"),  QT_TR_NOOP("Quaver triplets (3 per beat)") },
+        { "1/16T", QT_TR_NOOP("1/16T"), QT_TR_NOOP("Semiquaver triplets (6 per beat)") },
+    };
+    for (auto &d : divisions)
+    {
+        m_gridDivisionCombo->addItem(tr(d.text), QString(d.id));
+        m_gridDivisionCombo->setItemData(m_gridDivisionCombo->count() - 1, tr(d.tip), Qt::ToolTipRole);
+    }
+    m_gridDivisionCombo->setCurrentIndex(m_gridDivisionCombo->findData(QString("1/4")));
+    m_gridDivisionCombo->setToolTip(tr("Grid: the note value the grid lines and snapping use"));
+    m_gridDivisionCombo->setEnabled(false);
+    gridLabel->setToolTip(m_gridDivisionCombo->toolTip());
+    m_toolbar->addWidget(m_gridDivisionCombo);
+    connect(m_gridDivisionCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(slotGridDivisionChanged(int)));
 
     /* Grid offset: where bar 1 of the BPM grid starts */
     QLabel* offsetLabel = new QLabel(tr("Bar 1 at:"));
@@ -984,6 +1056,8 @@ void ShowManager::slotAddAudio()
         delete f;
         return;
     }
+    // QLC+DAN: new audio starts at 50% volume
+    audio->setVolume(0.5);
     // Overlapping check
     if (checkOverlapping(m_showview->getTimeFromCursor(), audio->totalDuration()) == true)
     {
@@ -1310,6 +1384,7 @@ void ShowManager::slotTimeDivisionTypeChanged(int idx)
         m_bpmField->setEnabled(idx > 0);
         m_gridOffsetField->setEnabled(idx > 0);
         m_gridOffsetCursorAction->setEnabled(idx > 0);
+        m_gridDivisionCombo->setEnabled(idx > 0);
         if (m_show != NULL)
             m_show->setTimeDivision((Show::TimeDivision)var.toInt(), m_bpmField->value());
         updateEditorBeatTempo();
@@ -1346,6 +1421,17 @@ void ShowManager::slotGridOffsetChanged(int value)
     if (m_show != NULL)
     {
         m_show->setGridOffset(value);
+        m_doc->setModified();
+    }
+}
+
+void ShowManager::slotGridDivisionChanged(int index)
+{
+    QString division = m_gridDivisionCombo->itemData(index).toString();
+    m_showview->setGridDivision(division);
+    if (m_show != NULL && m_show->gridDivision() != division)
+    {
+        m_show->setGridDivision(division);
         m_doc->setModified();
     }
 }
@@ -1747,6 +1833,12 @@ void ShowManager::updateMultiTrackView()
     m_showview->setBPMValue(m_show->timeDivisionBPM());
     m_gridOffsetField->setValue(m_show->gridOffset());
     m_showview->setGridOffset(m_show->gridOffset());
+    {
+        QSignalBlocker blocker(m_gridDivisionCombo);
+        int dIdx = m_gridDivisionCombo->findData(m_show->gridDivision());
+        m_gridDivisionCombo->setCurrentIndex(dIdx < 0 ? m_gridDivisionCombo->findData(QString("1/4")) : dIdx);
+    }
+    m_showview->setGridDivision(m_show->gridDivision());
     int tIdx = m_timeDivisionCombo->findData(QVariant(m_show->timeDivisionType()));
     m_timeDivisionCombo->setCurrentIndex(tIdx);
 
@@ -1834,6 +1926,7 @@ void ShowManager::updateMultiTrackView()
     if (m_doc->clipboard()->hasFunction())
         m_pasteAction->setEnabled(true);
     m_showview->updateViewSize();
+    refreshMarkers();
 }
 
 bool ShowManager::checkOverlapping(quint32 startTime, quint32 duration)
@@ -1900,4 +1993,245 @@ void ShowManager::hideEvent(QHideEvent* ev)
 FunctionParent ShowManager::functionParent() const
 {
     return FunctionParent::master();
+}
+
+/*********************************************************************
+ * Markers (QLC+DAN)
+ *********************************************************************/
+
+QIcon ShowManager::markerIcon()
+{
+    // a flag with a plus, in the colour of the markers on the timeline
+    QPixmap pm(32, 32);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(90, 90, 90), 2.5));
+    p.drawLine(QPointF(7, 4), QPointF(7, 29));
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor(214, 60, 90));
+    p.drawRect(QRectF(8, 4, 20, 15));
+    p.setPen(QPen(Qt::white, 2.5));
+    p.drawLine(QPointF(18, 7.5), QPointF(18, 15.5));
+    p.drawLine(QPointF(14, 11.5), QPointF(22, 11.5));
+    p.end();
+    return QIcon(pm);
+}
+
+void ShowManager::refreshMarkers()
+{
+    if (m_show == NULL)
+        m_showview->setMarkers(QList<Show::Marker>());
+    else
+        m_showview->setMarkers(m_show->markers());
+}
+
+quint32 ShowManager::markerReferenceTime() const
+{
+    // while playing the cursor follows the show, so its exact time is the play position
+    return m_showview->cursorTime();
+}
+
+void ShowManager::slotAddMarkerAtCursor()
+{
+    slotAddMarkerAt(markerReferenceTime());
+}
+
+void ShowManager::slotAddMarkerAt(quint32 time)
+{
+    if (m_show == NULL)
+        return;
+
+    // name it after the highest "Marker N" so far, so names don't repeat after deletes
+    int number = 0;
+    foreach (const Show::Marker &m, m_show->markers())
+    {
+        if (m.name.startsWith(tr("Marker ")))
+            number = qMax(number, m.name.mid(tr("Marker ").length()).toInt());
+    }
+    // markers saved without a colour keep the one they are shown with now
+    QList<Show::Marker> markers = m_show->markers();
+    for (int i = 0; i < markers.count(); i++)
+        if (markers.at(i).color.isValid() == false)
+            m_show->setMarkerColor(i, markerColor(markers, i));
+
+    // next colour in the palette, but never the same as the sections either side
+    markers = m_show->markers();
+    QList<QColor> palette = ShowMarkerItem::palette();
+    QColor before, after;
+    for (int i = 0; i < markers.count(); i++)
+    {
+        if (markers.at(i).time <= time)
+            before = markerColor(markers, i);
+        else if (after.isValid() == false)
+            after = markerColor(markers, i);
+    }
+    int start = palette.indexOf(before) + 1;
+    if (start <= 0)
+        start = markers.count();
+    QColor color = palette.at(start % palette.count());
+    for (int n = 0; n < palette.count(); n++)
+    {
+        QColor c = palette.at((start + n) % palette.count());
+        if (c != before && c != after)
+        {
+            color = c;
+            break;
+        }
+    }
+
+    m_show->addMarker(time, tr("Marker %1").arg(number + 1), color);
+    refreshMarkers();
+}
+
+QColor ShowManager::markerColor(const QList<Show::Marker> &markers, int i)
+{
+    if (markers.at(i).color.isValid())
+        return markers.at(i).color;
+    QList<QColor> palette = ShowMarkerItem::palette();
+    return palette.at(i % palette.count());
+}
+
+void ShowManager::slotMarkerColor(int index, QColor color)
+{
+    if (m_show == NULL || index < 0 || index >= m_show->markers().count() || color.isValid() == false)
+        return;
+    m_show->setMarkerColor(index, color);
+    refreshMarkers();
+}
+
+void ShowManager::slotPreviousMarker()
+{
+    if (m_show == NULL)
+        return;
+
+    // a little slack, so pressing it again while playing goes back past the marker just passed
+    quint32 now = markerReferenceTime();
+    quint32 slack = (m_show->isRunning() && !m_show->isPaused()) ? 500 : 0;
+    QList<Show::Marker> markers = m_show->markers();
+    for (int i = markers.count() - 1; i >= 0; i--)
+    {
+        if (markers.at(i).time + slack < now)
+        {
+            slotJumpToTime(markers.at(i).time);
+            return;
+        }
+    }
+    slotJumpToTime(0);
+}
+
+void ShowManager::slotNextMarker()
+{
+    if (m_show == NULL)
+        return;
+
+    quint32 now = markerReferenceTime();
+    foreach (const Show::Marker &m, m_show->markers())
+    {
+        if (m.time > now)
+        {
+            slotJumpToTime(m.time);
+            return;
+        }
+    }
+}
+
+void ShowManager::slotJumpToTime(quint32 time)
+{
+    if (m_show == NULL)
+        return;
+
+    m_showview->moveCursor(time);
+    slotUpdateTime(time);
+
+    // like a DAW: when playing, carry on playing from the new position
+    if (m_show->isRunning() && m_show->isPaused() == false)
+    {
+        m_show->stop(functionParent());
+        m_show->stopAndWait();
+        m_show->start(m_doc->masterTimer(), functionParent(), time);
+    }
+}
+
+void ShowManager::slotMarkerMoved(int index, quint32 time)
+{
+    if (m_show == NULL || index < 0 || index >= m_show->markers().count())
+        return;
+
+    m_show->setMarker(index, time, m_show->markers().at(index).name);
+    refreshMarkers();
+}
+
+void ShowManager::slotRenameMarker(int index)
+{
+    if (m_show == NULL || index < 0 || index >= m_show->markers().count())
+        return;
+
+    Show::Marker m = m_show->markers().at(index);
+    bool ok = false;
+    QString name = QInputDialog::getText(this, tr("Rename marker"), tr("Marker name:"),
+                                         QLineEdit::Normal, m.name, &ok);
+    if (ok == false || name.trimmed().isEmpty())
+        return;
+
+    m_show->setMarker(index, m.time, name.trimmed());
+    refreshMarkers();
+}
+
+void ShowManager::slotDeleteMarker(int index)
+{
+    if (m_show == NULL)
+        return;
+
+    m_show->removeMarker(index);
+    refreshMarkers();
+}
+
+void ShowManager::slotMarkersMenuAboutToShow()
+{
+    QMenu *menu = m_markersButton->menu();
+    menu->clear();
+    menu->addAction(m_addMarkerAction);
+    menu->addAction(m_prevMarkerAction);
+    menu->addAction(m_nextMarkerAction);
+
+    if (m_show == NULL || m_show->markers().isEmpty())
+        return;
+
+    menu->addSeparator();
+    QList<Show::Marker> markers = m_show->markers();
+    for (int i = 0; i < markers.count(); i++)
+    {
+        quint32 t = markers.at(i).time;
+        QString timeStr = QString("%1:%2.%3").arg(t / 60000).arg((t / 1000) % 60, 2, 10, QChar('0'))
+                                             .arg((t % 1000) / 10, 2, 10, QChar('0'));
+        QPixmap swatch(12, 12);
+        swatch.fill(markerColor(markers, i));
+        QAction *a = menu->addAction(QIcon(swatch), QString("%1   %2").arg(timeStr, markers.at(i).name));
+        connect(a, &QAction::triggered, this, [this, t]() { slotJumpToTime(t); });
+    }
+
+    menu->addSeparator();
+    QMenu *renameMenu = menu->addMenu(tr("Rename"));
+    QMenu *deleteMenu = menu->addMenu(QIcon(":/editdelete.png"), tr("Delete"));
+    for (int i = 0; i < markers.count(); i++)
+    {
+        connect(renameMenu->addAction(markers.at(i).name), &QAction::triggered,
+                this, [this, i]() { slotRenameMarker(i); }, Qt::QueuedConnection);
+        connect(deleteMenu->addAction(markers.at(i).name), &QAction::triggered,
+                this, [this, i]() { slotDeleteMarker(i); }, Qt::QueuedConnection);
+    }
+    QAction *clearAll = deleteMenu->addAction(tr("All markers..."));
+    connect(clearAll, &QAction::triggered, this, [this]()
+    {
+        if (m_show == NULL)
+            return;
+        if (QMessageBox::question(this, tr("Delete markers"),
+                                  tr("Delete all markers in this show?")) != QMessageBox::Yes)
+            return;
+        while (m_show->markers().isEmpty() == false)
+            m_show->removeMarker(0);
+        refreshMarkers();
+    }, Qt::QueuedConnection);
+    deleteMenu->insertSeparator(clearAll);
 }

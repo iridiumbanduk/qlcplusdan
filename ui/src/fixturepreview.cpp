@@ -42,6 +42,7 @@
 
 #define SETTINGS_GEOMETRY "fixturepreview/geometry"
 #define SETTINGS_GAMMA "fixturepreview/gamma"
+#define SETTINGS_AWBOOST "fixturepreview/awboost"
 #define TICK_MS 33
 
 /*****************************************************************************
@@ -201,6 +202,7 @@ FixturePreview::FixturePreview(QWidget *parent, Doc *doc)
     , m_doc(doc)
     , m_lastMs(0)
     , m_gamma(2.2)
+    , m_awBoost(1.0)
 {
     setWindowTitle(tr("Fixture preview"));
     setAttribute(Qt::WA_OpaquePaintEvent);
@@ -208,6 +210,7 @@ FixturePreview::FixturePreview(QWidget *parent, Doc *doc)
 
     QSettings settings;
     m_gamma = settings.value(SETTINGS_GAMMA, 2.2).toDouble();
+    m_awBoost = settings.value(SETTINGS_AWBOOST, 1.0).toDouble();
     QVariant geo = settings.value(SETTINGS_GEOMETRY);
     if (geo.isValid())
         restoreGeometry(geo.toByteArray());
@@ -443,21 +446,49 @@ void FixturePreview::contextMenuEvent(QContextMenuEvent *e)
     const QList<QPair<QString, double>> curves = {
         { tr("As DMX values (linear)"), 1.0 },
         { tr("Natural (like the real LEDs)"), 2.2 },
-        { tr("Brighter"), 3.0 } };
+        { tr("Brighter"), 3.0 },
+        { tr("Much brighter"), 4.0 } };
     for (const auto &c : curves)
     {
         QAction *a = menu.addAction(c.first);
         a->setCheckable(true);
         a->setChecked(qFuzzyCompare(m_gamma, c.second));
-        a->setData(c.second);
+        a->setData(QVariantList() << 0 << c.second);
         group.addAction(a);
     }
+
+    // white and amber LEDs are much more powerful than the RGB ones on some fixtures
+    menu.addSection(tr("White and amber LEDs compared to RGB"));
+    QActionGroup boostGroup(&menu);
+    const QList<QPair<QString, double>> boosts = {
+        { tr("Same as RGB"), 1.0 },
+        { tr("1.5x brighter"), 1.5 },
+        { tr("2x brighter"), 2.0 },
+        { tr("3x brighter"), 3.0 } };
+    for (const auto &b : boosts)
+    {
+        QAction *a = menu.addAction(b.first);
+        a->setCheckable(true);
+        a->setChecked(qFuzzyCompare(m_awBoost, b.second));
+        a->setData(QVariantList() << 1 << b.second);
+        boostGroup.addAction(a);
+    }
+
     QAction *chosen = menu.exec(e->globalPos());
     if (chosen != NULL)
     {
-        m_gamma = chosen->data().toDouble();
+        QVariantList d = chosen->data().toList();
         QSettings settings;
-        settings.setValue(SETTINGS_GAMMA, m_gamma);
+        if (d.at(0).toInt() == 0)
+        {
+            m_gamma = d.at(1).toDouble();
+            settings.setValue(SETTINGS_GAMMA, m_gamma);
+        }
+        else
+        {
+            m_awBoost = d.at(1).toDouble();
+            settings.setValue(SETTINGS_AWBOOST, m_awBoost);
+        }
         update();
     }
 }
@@ -487,8 +518,16 @@ void FixturePreview::drawSTB448(QPainter &p, const QRectF &r, const PreviewState
             QColor c;
             if (col == 0) c = st.rgb[section];
             else if (col == 3) c = st.rgb[16 + section];
-            else if (col == 1) c = QColor::fromRgbF(qMin(1.0, st.amber[section]), qMin(1.0, st.amber[section] * 0.6), 0);
-            else c = QColor::fromRgbF(qMin(1.0, st.white[section]), qMin(1.0, st.white[section]), qMin(1.0, st.white[section]));
+            else if (col == 1)
+            {
+                double a = qMin(1.0, st.amber[section] * m_awBoost);
+                c = QColor::fromRgbF(a, a * 0.6, 0);
+            }
+            else
+            {
+                double w = qMin(1.0, st.white[section] * m_awBoost);
+                c = QColor::fromRgbF(w, w, w);
+            }
             led.setLeft(inner.left() + colX[col] * inner.width());
             led.setWidth(colW[col] * inner.width());
             p.setBrush(ledColor(c));

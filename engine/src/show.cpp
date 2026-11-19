@@ -18,6 +18,7 @@
 */
 
 #include <QXmlStreamReader>
+#include <algorithm>
 #include <QXmlStreamWriter>
 #include <QString>
 #include <QDebug>
@@ -33,6 +34,11 @@
 #define KXMLQLCShowTimeType     QStringLiteral("Type")
 #define KXMLQLCShowTimeBPM      QStringLiteral("BPM")
 #define KXMLQLCShowGridOffset   QStringLiteral("GridOffset")
+#define KXMLQLCShowGridDivision QStringLiteral("GridDivision")
+#define KXMLQLCShowMarker       QStringLiteral("Marker")
+#define KXMLQLCShowMarkerTime   QStringLiteral("Time")
+#define KXMLQLCShowMarkerName   QStringLiteral("Name")
+#define KXMLQLCShowMarkerColor  QStringLiteral("Color")
 
 /*****************************************************************************
  * Initialization
@@ -42,6 +48,7 @@ Show::Show(Doc* doc) : Function(doc, Function::ShowType)
     , m_timeDivisionType(Time)
     , m_timeDivisionBPM(120)
     , m_gridOffset(0)
+    , m_gridDivision("1/4")
     , m_latestTrackId(0)
     , m_latestShowFunctionID(0)
     , m_runner(NULL)
@@ -111,6 +118,8 @@ bool Show::copyFrom(const Function* function)
     m_timeDivisionType = show->m_timeDivisionType;
     m_timeDivisionBPM = show->m_timeDivisionBPM;
     m_gridOffset = show->m_gridOffset;
+    m_gridDivision = show->m_gridDivision;
+    m_markers = show->m_markers;
     m_latestTrackId = show->m_latestTrackId;
     m_latestShowFunctionID = show->m_latestShowFunctionID;
 
@@ -196,6 +205,87 @@ quint32 Show::gridOffset() const
 void Show::setGridOffset(quint32 msec)
 {
     m_gridOffset = msec;
+}
+
+QString Show::gridDivision() const
+{
+    return m_gridDivision;
+}
+
+void Show::setGridDivision(const QString &division)
+{
+    static const QStringList valid = { "bar", "1/2", "1/4", "1/8", "1/16", "1/32", "1/4T", "1/8T", "1/16T" };
+    if (valid.contains(division) && division != m_gridDivision)
+    {
+        m_gridDivision = division;
+        emit changed(id());
+    }
+}
+
+/*****************************************************************************
+ * Markers (QLC+DAN)
+ *****************************************************************************/
+
+QList<Show::Marker> Show::markers() const
+{
+    return m_markers;
+}
+
+void Show::sortMarkers()
+{
+    std::stable_sort(m_markers.begin(), m_markers.end(),
+                     [](const Marker &a, const Marker &b) { return a.time < b.time; });
+}
+
+int Show::addMarker(quint32 time, const QString &name, const QColor &color)
+{
+    Marker m;
+    m.time = time;
+    m.name = name;
+    m.color = color;
+    m_markers.append(m);
+    sortMarkers();
+    emit changed(id());
+
+    // the last one with this time, as stable_sort keeps the new one after equals
+    for (int i = m_markers.count() - 1; i >= 0; i--)
+        if (m_markers.at(i).time == time && m_markers.at(i).name == name)
+            return i;
+    return -1;
+}
+
+int Show::setMarker(int index, quint32 time, const QString &name)
+{
+    if (index < 0 || index >= m_markers.count())
+        return -1;
+
+    Marker m = m_markers.takeAt(index);
+    m.time = time;
+    m.name = name;
+
+    // insert after any markers at the same time, to keep the order stable
+    int pos = 0;
+    while (pos < m_markers.count() && m_markers.at(pos).time <= time)
+        pos++;
+    m_markers.insert(pos, m);
+    emit changed(id());
+    return pos;
+}
+
+void Show::setMarkerColor(int index, const QColor &color)
+{
+    if (index < 0 || index >= m_markers.count())
+        return;
+    m_markers[index].color = color;
+    emit changed(id());
+}
+
+void Show::removeMarker(int index)
+{
+    if (index < 0 || index >= m_markers.count())
+        return;
+    m_markers.removeAt(index);
+    emit changed(id());
 }
 
 QString Show::tempoToString(Show::TimeDivision type)
@@ -388,7 +478,20 @@ bool Show::saveXML(QXmlStreamWriter *doc) const
     doc->writeAttribute(KXMLQLCShowTimeBPM, QString::number(m_timeDivisionBPM));
     if (m_gridOffset > 0)
         doc->writeAttribute(KXMLQLCShowGridOffset, QString::number(m_gridOffset));
+    if (m_gridDivision != "1/4")
+        doc->writeAttribute(KXMLQLCShowGridDivision, m_gridDivision);
     doc->writeEndElement();
+
+    /* QLC+DAN markers. Official QLC+ skips these tags when loading */
+    foreach (const Marker &m, m_markers)
+    {
+        doc->writeStartElement(KXMLQLCShowMarker);
+        doc->writeAttribute(KXMLQLCShowMarkerTime, QString::number(m.time));
+        doc->writeAttribute(KXMLQLCShowMarkerName, m.name);
+        if (m.color.isValid())
+            doc->writeAttribute(KXMLQLCShowMarkerColor, m.color.name());
+        doc->writeEndElement();
+    }
 
     foreach (Track *track, m_tracks)
         track->saveXML(doc);
@@ -423,6 +526,18 @@ bool Show::loadXML(QXmlStreamReader &root)
             setTimeDivision(stringToTempo(type), bpm);
             if (root.attributes().hasAttribute(KXMLQLCShowGridOffset))
                 setGridOffset(root.attributes().value(KXMLQLCShowGridOffset).toString().toUInt());
+            if (root.attributes().hasAttribute(KXMLQLCShowGridDivision))
+                setGridDivision(root.attributes().value(KXMLQLCShowGridDivision).toString());
+            root.skipCurrentElement();
+        }
+        else if (root.name() == KXMLQLCShowMarker)
+        {
+            Marker m;
+            m.time = root.attributes().value(KXMLQLCShowMarkerTime).toString().toUInt();
+            m.name = root.attributes().value(KXMLQLCShowMarkerName).toString();
+            if (root.attributes().hasAttribute(KXMLQLCShowMarkerColor))
+                m.color = QColor(root.attributes().value(KXMLQLCShowMarkerColor).toString());
+            m_markers.append(m);
             root.skipCurrentElement();
         }
         else if (root.name() == KXMLQLCTrack)
@@ -437,6 +552,7 @@ bool Show::loadXML(QXmlStreamReader &root)
             root.skipCurrentElement();
         }
     }
+    sortMarkers();
 
     return true;
 }

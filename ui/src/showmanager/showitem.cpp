@@ -90,13 +90,13 @@ QList<QAction *> ShowItem::getDefaultActions() const
     return actions;
 }
 
-void ShowItem::setTimeScale(int val)
+void ShowItem::setTimeScale(double val)
 {
     prepareGeometryChange();
     m_timeScale = val;
 }
 
-int ShowItem::getTimeScale() const
+double ShowItem::getTimeScale() const
 {
     return m_timeScale;
 }

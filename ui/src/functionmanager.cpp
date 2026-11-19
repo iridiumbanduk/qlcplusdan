@@ -461,6 +461,8 @@ void FunctionManager::slotAddAudio()
             QMessageBox::warning(this, tr("Unsupported audio file"), tr("This audio file cannot be played with QLC+. Sorry."));
             return;
         }
+        // QLC+DAN: new audio starts at 50% volume
+        audio->setVolume(0.5);
         if (m_doc->addFunction(f) == true)
         {
             QTreeWidgetItem* item = m_tree->functionItem(f);

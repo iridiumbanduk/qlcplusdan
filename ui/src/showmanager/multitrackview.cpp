@@ -18,6 +18,12 @@
 */
 
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSimpleTextItem>
+#include <QGraphicsProxyWidget>
+#include <QColorDialog>
+#include <algorithm>
+#include <QPainter>
+#include <QMenu>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -43,10 +49,10 @@ MultiTrackView::MultiTrackView(QWidget *parent) :
     setScene(m_scene);
 
     m_timeSlider = new QSlider(Qt::Horizontal);
-    m_timeSlider->setRange(1, 15);
+    m_timeSlider->setRange(-2, 15); // QLC+DAN: -2..0 are the extra close zoom levels
     m_timeSlider->setValue(3);
     m_timeSlider->setSingleStep(1);
-    m_timeSlider->setFixedSize(TRACK_WIDTH - 4, HEADER_HEIGHT);
+    m_timeSlider->setFixedSize(TRACK_WIDTH - 4, RULER_HEIGHT);
 
     m_timeSlider->setStyleSheet("QSlider { background-color: #969696; }"
                           "QSlider::groove:horizontal {"
@@ -62,12 +68,29 @@ MultiTrackView::MultiTrackView(QWidget *parent) :
                           "border-radius: 4px;"
                           "}");
     connect(m_timeSlider, SIGNAL(valueChanged(int)), this, SLOT(slotTimeScaleChanged(int)));
-    m_scene->addWidget(m_timeSlider);
+    QGraphicsProxyWidget *sliderProxy = m_scene->addWidget(m_timeSlider);
+    sliderProxy->setPos(0, MARKER_LANE_HEIGHT);
+
+    // QLC+DAN: marker lane caption, left of the lane
+    m_markerLaneLabel = m_scene->addSimpleText(tr("Markers"));
+    m_markerLaneLabel->setBrush(QColor(200, 200, 200));
+    QFont laneFont = m_markerLaneLabel->font();
+    laneFont.setPixelSize(11);
+    m_markerLaneLabel->setFont(laneFont);
+    m_markerLaneLabel->setPos(6, (MARKER_LANE_HEIGHT - m_markerLaneLabel->boundingRect().height()) / 2);
+    m_markerDragTime = 0;
+    m_panning = false;
+    m_panStartH = 0;
+    m_panStartV = 0;
 
     m_header = new ShowHeaderItem(m_scene->width());
     m_header->setPos(TRACK_WIDTH, 0);
     connect(m_header, SIGNAL(itemClicked(QGraphicsSceneMouseEvent *)),
             this, SLOT(slotHeaderClicked(QGraphicsSceneMouseEvent *)));
+    connect(m_header, SIGNAL(markerLaneDoubleClicked(qreal,bool)),
+            this, SLOT(slotMarkerLaneDoubleClicked(qreal,bool)));
+    connect(m_header, SIGNAL(markerLaneContextMenu(qreal,QPoint)),
+            this, SLOT(slotMarkerLaneContextMenu(qreal,QPoint)));
     m_scene->addItem(m_header);
     m_snapToGrid = false;
 
@@ -94,7 +117,7 @@ void MultiTrackView::updateTracksDividers()
     if (m_vdivider != NULL)
         m_scene->removeItem(m_vdivider);
 
-    int ypos = 35 + TRACK_HEIGHT;
+    int ypos = HEADER_HEIGHT + TRACK_HEIGHT;
     int hDivNum = 6;
     if (m_tracks.count() > 5)
         hDivNum = m_tracks.count();
@@ -122,6 +145,7 @@ void MultiTrackView::setViewSize(int width, int height)
     else
         m_header->setHeight(HEADER_HEIGHT);
     updateTracksDividers();
+    layoutMarkers();
 }
 
 void MultiTrackView::updateViewSize()
@@ -155,6 +179,8 @@ void MultiTrackView::resetView()
     for (int i = 0; i < m_items.count(); i++)
         m_scene->removeItem(m_items.at(i));
     m_items.clear();
+
+    clearMarkers();
 
     rewindCursor();
     this->horizontalScrollBar()->setSliderPosition(0);
@@ -197,15 +223,15 @@ void MultiTrackView::setItemCommonProperties(ShowItem *item, ShowFunction *func,
 
     item->setTrackIndex(trackNum);
 
-    int timeScale = m_timeSlider->value();
+    double timeScale = timeScaleFromSlider(m_timeSlider->value());
 
     if (func->startTime() == UINT_MAX)
     {
         item->setStartTime(getTimeFromCursor());
-        item->setPos(m_cursor->x() + 2, 36 + (trackNum * TRACK_HEIGHT));
+        item->setPos(m_cursor->x() + 2, HEADER_HEIGHT + 1 + (trackNum * TRACK_HEIGHT));
     }
     else
-        item->setPos(getPositionFromTime(func->startTime()) + 2, 36 + (trackNum * TRACK_HEIGHT));
+        item->setPos(getPositionFromTime(func->startTime()) + 2, HEADER_HEIGHT + 1 + (trackNum * TRACK_HEIGHT));
 
     item->setTimeScale(timeScale);
 
@@ -421,6 +447,11 @@ quint32 MultiTrackView::getTimeFromCursor() const
     return s_time;
 }
 
+quint32 MultiTrackView::cursorTime() const
+{
+    return m_cursor->getTime();
+}
+
 quint32 MultiTrackView::getTimeFromPosition(qreal pos) const
 {
     return ((double)(pos - TRACK_WIDTH) *
@@ -481,27 +512,63 @@ void MultiTrackView::setGridOffset(quint32 msec)
 
 quint32 MultiTrackView::snapTimeToGrid(quint32 time) const
 {
-    double step = m_header->getGridStepMs();
-    if (step <= 0)
-        return time;
+    return m_header->snapTime(time);
+}
 
-    double offset = m_header->getGridOffsetMs();
-    double snapped = offset + (qRound64(((double)time - offset) / step) * step);
+void MultiTrackView::setGridDivision(const QString &division)
+{
+    m_header->setGridDivision(division);
+}
 
-    // grid lines before the start of the show are not reachable
-    if (snapped < 0)
-        snapped += step;
+void MultiTrackView::mousePressEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::MiddleButton)
+    {
+        m_panning = true;
+        m_panStartPos = e->pos();
+        m_panStartH = horizontalScrollBar()->value();
+        m_panStartV = verticalScrollBar()->value();
+        viewport()->setCursor(Qt::ClosedHandCursor);
+        e->accept();
+        return;
+    }
+    QGraphicsView::mousePressEvent(e);
+}
 
-    // the start of the show is always a valid position
-    if ((double)time < qAbs(snapped - (double)time))
-        return 0;
-
-    return (quint32)qRound64(snapped);
+void MultiTrackView::mouseMoveEvent(QMouseEvent *e)
+{
+    if (m_panning)
+    {
+        // the timeline follows the mouse, as if dragging the page
+        QPoint delta = e->pos() - m_panStartPos;
+        horizontalScrollBar()->setValue(m_panStartH - delta.x());
+        verticalScrollBar()->setValue(m_panStartV - delta.y());
+        e->accept();
+        return;
+    }
+    QGraphicsView::mouseMoveEvent(e);
 }
 
 void MultiTrackView::mouseReleaseEvent(QMouseEvent * e)
 {
-    if (getSelectedItem() == NULL)
+    if (m_panning)
+    {
+        if (e->button() == Qt::MiddleButton)
+        {
+            m_panning = false;
+            viewport()->unsetCursor();
+        }
+        // panning never moves the cursor
+        e->accept();
+        return;
+    }
+    if (e->button() == Qt::MiddleButton)
+        return;
+
+    // QLC+DAN: a marker handles its own clicks and drags
+    bool onMarker = dynamic_cast<ShowMarkerItem *>(m_scene->mouseGrabberItem()) != NULL;
+
+    if (getSelectedItem() == NULL && onMarker == false)
     {
         // Don't handle positions at the left of QLC+ window
         if (mapToScene(e->pos()).x() < 0)
@@ -529,16 +596,32 @@ void MultiTrackView::mouseReleaseEvent(QMouseEvent * e)
 
 void MultiTrackView::wheelEvent(QWheelEvent *event)
 {
+    // QLC+DAN: ordinary mouse wheels only report angleDelta, not pixelDelta
+    int delta = event->pixelDelta().isNull() ? event->angleDelta().y() : event->pixelDelta().y();
+
     if (event->modifiers() & Qt::ControlModifier)
     {
+        if (delta == 0)
+            return;
         int zoomValue = m_timeSlider->value();
-        if (event->pixelDelta().y() > 0)
+        if (delta > 0)
             zoomValue++;
         else
             zoomValue--;
 
         if (zoomValue >= m_timeSlider->minimum() && zoomValue <= m_timeSlider->maximum())
             m_timeSlider->setValue(zoomValue);
+        return;
+    }
+
+    // QLC+DAN: Shift + wheel scrolls sideways
+    if (event->modifiers() & Qt::ShiftModifier)
+    {
+        int steps = event->pixelDelta().isNull() ? delta / 120 * 3 * 20 : delta;
+        if (steps == 0)
+            steps = delta > 0 ? 20 : -20;
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - steps);
+        event->accept();
         return;
     }
     QGraphicsView::wheelEvent(event);
@@ -560,9 +643,16 @@ void MultiTrackView::slotHeaderClicked(QGraphicsSceneMouseEvent *event)
     emit timeChanged(m_cursor->getTime());
 }
 
-void MultiTrackView::slotTimeScaleChanged(int val)
+double MultiTrackView::timeScaleFromSlider(int value)
 {
-    //int oldScale = m_header->getTimeScale();
+    if (value >= 1)
+        return value;
+    return 1.0 / (double)(1 << (1 - value));
+}
+
+void MultiTrackView::slotTimeScaleChanged(int sliderValue)
+{
+    double val = timeScaleFromSlider(sliderValue);
     m_header->setTimeScale(val);
 
     foreach (ShowItem *item, m_items)
@@ -575,6 +665,7 @@ void MultiTrackView::slotTimeScaleChanged(int val)
     int newCursorPos = getPositionFromTime(m_cursor->getTime());
     m_cursor->setPos(newCursorPos + 2, m_cursor->y());
     updateViewSize();
+    layoutMarkers();
 }
 
 void MultiTrackView::slotTrackClicked(TrackItem *track)
@@ -615,6 +706,7 @@ void MultiTrackView::slotTrackMuteFlagChanged(TrackItem* item, bool mute)
 
 void MultiTrackView::slotViewScrolled(int)
 {
+    updateMarkersViewLeft();
     //qDebug() << Q_FUNC_INFO << "Percentage: " << value;
 }
 
@@ -664,3 +756,165 @@ void MultiTrackView::slotAlignToCursor(ShowItem *item)
     m_scene->update();
 }
 
+
+/*********************************************************************
+ * Markers (QLC+DAN)
+ *********************************************************************/
+
+void MultiTrackView::clearMarkers()
+{
+    foreach (ShowMarkerItem *item, m_markerItems)
+    {
+        m_scene->removeItem(item);
+        item->deleteLater();
+    }
+    m_markerItems.clear();
+}
+
+void MultiTrackView::setMarkers(const QList<Show::Marker> &markers)
+{
+    clearMarkers();
+    for (int i = 0; i < markers.count(); i++)
+    {
+        QColor color = markers.at(i).color;
+        if (color.isValid() == false)
+            color = ShowMarkerItem::palette().at(i % ShowMarkerItem::palette().count());
+        ShowMarkerItem *item = new ShowMarkerItem(i, markers.at(i).time, markers.at(i).name,
+                                                  color, m_scene->height());
+        m_scene->addItem(item);
+        m_markerItems.append(item);
+        connect(item, SIGNAL(clicked(ShowMarkerItem*)), this, SLOT(slotMarkerClicked(ShowMarkerItem*)));
+        connect(item, SIGNAL(dragged(ShowMarkerItem*,qreal,bool)),
+                this, SLOT(slotMarkerDragged(ShowMarkerItem*,qreal,bool)));
+        connect(item, SIGNAL(dropped(ShowMarkerItem*)), this, SLOT(slotMarkerDropped(ShowMarkerItem*)));
+        connect(item, SIGNAL(doubleClicked(ShowMarkerItem*)),
+                this, SLOT(slotMarkerDoubleClicked(ShowMarkerItem*)));
+        connect(item, SIGNAL(contextMenuRequested(ShowMarkerItem*,QPoint)),
+                this, SLOT(slotMarkerContextMenu(ShowMarkerItem*,QPoint)));
+    }
+    layoutMarkers();
+}
+
+void MultiTrackView::layoutMarkers()
+{
+    foreach (ShowMarkerItem *item, m_markerItems)
+    {
+        item->setPos(getPositionFromTime(item->time()), 0);
+        item->setHeight(m_scene->height());
+    }
+    layoutMarkerBands();
+    updateMarkersViewLeft();
+}
+
+void MultiTrackView::layoutMarkerBands()
+{
+    // by position on screen, so this also works while one is being dragged
+    QList<ShowMarkerItem *> sorted = m_markerItems;
+    std::stable_sort(sorted.begin(), sorted.end(),
+                     [](ShowMarkerItem *a, ShowMarkerItem *b) { return a->x() < b->x(); });
+    for (int i = 0; i < sorted.count(); i++)
+    {
+        qreal end = (i + 1 < sorted.count()) ? sorted.at(i + 1)->x() : m_scene->width();
+        sorted.at(i)->setBandWidth(qMax(1, (int)(end - sorted.at(i)->x())));
+    }
+}
+
+void MultiTrackView::updateMarkersViewLeft()
+{
+    qreal left = qMax<qreal>(TRACK_WIDTH, mapToScene(0, 0).x());
+    foreach (ShowMarkerItem *item, m_markerItems)
+        item->setViewLeft(left);
+}
+
+quint32 MultiTrackView::markerTimeFromPosition(qreal x, bool noSnap) const
+{
+    if (x < TRACK_WIDTH)
+        x = TRACK_WIDTH;
+    quint32 time = getTimeFromPosition(x);
+    if (m_snapToGrid && noSnap == false)
+        time = snapTimeToGrid(time);
+    return time;
+}
+
+void MultiTrackView::slotMarkerClicked(ShowMarkerItem *item)
+{
+    emit markerJumpRequested(item->time());
+}
+
+void MultiTrackView::slotMarkerDragged(ShowMarkerItem *item, qreal x, bool noSnap)
+{
+    m_markerDragTime = markerTimeFromPosition(x, noSnap);
+    item->setPos(getPositionFromTime(m_markerDragTime), 0);
+    layoutMarkerBands();
+}
+
+void MultiTrackView::slotMarkerDropped(ShowMarkerItem *item)
+{
+    // the view is rebuilt when the show changes, so don't touch item after this
+    emit markerMoved(item->index(), m_markerDragTime);
+}
+
+void MultiTrackView::slotMarkerDoubleClicked(ShowMarkerItem *item)
+{
+    emit markerRenameRequested(item->index());
+}
+
+void MultiTrackView::slotMarkerContextMenu(ShowMarkerItem *item, QPoint screenPos)
+{
+    int index = item->index();
+    quint32 time = item->time();
+    QMenu menu;
+    QAction *jump = menu.addAction(tr("Move cursor here"));
+    QAction *rename = menu.addAction(tr("Rename marker..."));
+
+    QMenu *colorMenu = menu.addMenu(tr("Colour"));
+    QList<QColor> palette = ShowMarkerItem::palette();
+    QList<QAction *> colorActions;
+    foreach (QColor c, palette)
+    {
+        QPixmap swatch(16, 16);
+        swatch.fill(c);
+        if (c == item->color())
+        {
+            // mark the current colour
+            QPainter p(&swatch);
+            p.setPen(QPen(ShowMarkerItem::textColorFor(c), 2));
+            p.drawRect(1, 1, 13, 13);
+        }
+        colorActions.append(colorMenu->addAction(QIcon(swatch), QString()));
+    }
+    colorMenu->addSeparator();
+    QAction *customColor = colorMenu->addAction(tr("Other colour..."));
+
+    QAction *del = menu.addAction(QIcon(":/editdelete.png"), tr("Delete marker"));
+    QColor oldColor = item->color();
+    QAction *chosen = menu.exec(screenPos);
+    if (chosen != NULL && colorActions.contains(chosen))
+        emit markerColorRequested(index, palette.at(colorActions.indexOf(chosen)));
+    else if (chosen == customColor)
+    {
+        QColor c = QColorDialog::getColor(oldColor, this, tr("Marker colour"));
+        if (c.isValid())
+            emit markerColorRequested(index, c);
+    }
+    else if (chosen == jump)
+        emit markerJumpRequested(time);
+    else if (chosen == rename)
+        emit markerRenameRequested(index);
+    else if (chosen == del)
+        emit markerDeleteRequested(index);
+}
+
+void MultiTrackView::slotMarkerLaneDoubleClicked(qreal x, bool noSnap)
+{
+    emit markerAddRequested(markerTimeFromPosition(TRACK_WIDTH + x, noSnap));
+}
+
+void MultiTrackView::slotMarkerLaneContextMenu(qreal x, QPoint screenPos)
+{
+    quint32 time = markerTimeFromPosition(TRACK_WIDTH + x, false);
+    QMenu menu;
+    QAction *add = menu.addAction(tr("Add marker here"));
+    if (menu.exec(screenPos) == add)
+        emit markerAddRequested(time);
+}

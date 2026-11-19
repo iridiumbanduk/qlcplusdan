@@ -21,8 +21,11 @@
 #define AUDIOITEM_H
 
 #include <QGraphicsItem>
+#include <QPointer>
 #include <QObject>
 #include <QAction>
+#include <QThread>
+#include <QImage>
 #include <QFont>
 
 #include "showitem.h"
@@ -31,6 +34,35 @@
 /** @addtogroup ui_functions
  * @{
  */
+
+class AudioItem;
+class AudioDecoder;
+
+/**
+ * Draws an audio waveform in the background.
+ * QLC+DAN: the thread only gets copies of what it needs and hands the
+ * finished picture back to the item on the GUI thread, so the item can
+ * be deleted (e.g. switching shows) while a waveform is still being drawn.
+ */
+class PreviewThread final : public QThread
+{
+public:
+    PreviewThread(AudioItem *item, AudioDecoder *decoder,
+                  bool left, bool right, qint64 duration, int generation);
+    ~PreviewThread();
+
+private:
+    /** Retrieve a sample value from an audio buffer, given the sample size */
+    qint32 getSample(const unsigned char *data, quint32 idx, int sampleSize) const;
+    void run() override;
+
+    /** Safe to use while running: the item waits for this thread before it is deleted */
+    AudioItem *m_item;
+    AudioDecoder *m_decoder;
+    bool m_left, m_right;
+    qint64 m_duration;
+    int m_generation;
+};
 
 /**
  *
@@ -44,12 +76,13 @@ class AudioItem final : public ShowItem
 
 public:
     AudioItem(Audio *aud, ShowFunction *func);
+    ~AudioItem();
 
     /** @reimp */
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     /** @reimp */
-    void setTimeScale(int val) override;
+    void setTimeScale(double val) override;
 
     /** @reimp */
     void setDuration(quint32 msec, bool stretch) override;
@@ -78,6 +111,13 @@ private:
     /** Start a thread to elapse a waveform preview over the item */
     void updateWaveformPreview();
 
+    /** Stop a waveform that is still being drawn, and wait for it */
+    void stopWaveformPreview();
+
+public:
+    /** Called (on the GUI thread) when a waveform has been drawn */
+    void setWaveformPreview(const QImage &image, int generation);
+
 public:
     /** Reference to the actual Audio Function */
     Audio *m_audio;
@@ -89,20 +129,14 @@ public:
 
     /** Pixmap holding the waveform (if enabled) */
     QPixmap *m_preview;
-};
-
-class PreviewThread final : public QThread
-{
-public:
-    void setAudioItem(AudioItem *item);
 
 private:
-    /** Retrieve a sample value from an audio buffer, given the sample size */
-    qint32 getSample(const unsigned char *data, quint32 idx, int sampleSize) const;
-    void run() override;
-
-    AudioItem *m_item;
+    QPointer<PreviewThread> m_previewThread;
+    int m_previewGeneration;
+    /** The waveform scaled to the item's width, so it isn't rescaled on every paint */
+    QPixmap m_previewScaled;
 };
+
 
 /** @} */
 

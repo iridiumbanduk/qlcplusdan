@@ -94,7 +94,7 @@ void EFXItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     ShowItem::postPaint(painter);
 }
 
-void EFXItem::setTimeScale(int val)
+void EFXItem::setTimeScale(double val)
 {
     ShowItem::setTimeScale(val);
     calculateWidth();

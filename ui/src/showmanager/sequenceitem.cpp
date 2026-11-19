@@ -141,7 +141,7 @@ void SequenceItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     ShowItem::postPaint(painter);
 }
 
-void SequenceItem::setTimeScale(int val)
+void SequenceItem::setTimeScale(double val)
 {
     ShowItem::setTimeScale(val);
     calculateWidth();

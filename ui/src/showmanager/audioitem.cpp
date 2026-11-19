@@ -18,6 +18,7 @@
 */
 
 #include <QApplication>
+#include <QStyleOptionGraphicsItem>
 #include <QPainter>
 #include <qmath.h>
 #include <QDebug>
@@ -35,6 +36,7 @@ AudioItem::AudioItem(Audio *aud, ShowFunction *func)
     , m_previewRightAction(NULL)
     , m_previewStereoAction(NULL)
     , m_preview(NULL)
+    , m_previewGeneration(0)
 {
     Q_ASSERT(aud != NULL);
 
@@ -63,6 +65,19 @@ AudioItem::AudioItem(Audio *aud, ShowFunction *func)
     m_previewStereoAction->setCheckable(true);
     connect(m_previewStereoAction, SIGNAL(triggered(bool)),
             this, SLOT(slotAudioPreviewStereo()));
+
+    /* QLC+DAN: lets paint() draw only the visible part of a long waveform */
+    setFlag(QGraphicsItem::ItemUsesExtendedStyleOption, true);
+
+    /* QLC+DAN: show the left channel (or mono) waveform straight away */
+    m_previewLeftAction->setChecked(true);
+    updateWaveformPreview();
+}
+
+AudioItem::~AudioItem()
+{
+    stopWaveformPreview();
+    delete m_preview;
 }
 
 void AudioItem::calculateWidth()
@@ -82,7 +97,6 @@ void AudioItem::calculateWidth()
 
 void AudioItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    Q_UNUSED(option);
     Q_UNUSED(widget);
 
     float timeScale = 50/(float)m_timeScale;
@@ -92,7 +106,26 @@ void AudioItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     if (m_preview != NULL)
     {
         // show preview here
-        painter->drawPixmap(0, 0, m_preview->scaled(m_width, TRACK_HEIGHT - 4));
+        if (m_width <= 16000)
+        {
+            if (m_previewScaled.isNull() || m_previewScaled.width() != m_width)
+                m_previewScaled = m_preview->scaled(m_width, TRACK_HEIGHT - 4);
+            painter->drawPixmap(0, 0, m_previewScaled);
+        }
+        else
+        {
+            // QLC+DAN: at the closest zoom levels a scaled copy of the whole
+            // song would be enormous, so only draw the part on screen
+            m_previewScaled = QPixmap();
+            QRectF target = option->exposedRect.intersected(QRectF(0, 0, m_width, TRACK_HEIGHT - 4));
+            if (target.isEmpty() == false)
+            {
+                double sx = (double)m_preview->width() / (double)m_width;
+                double sy = (double)m_preview->height() / (double)(TRACK_HEIGHT - 4);
+                QRectF source(target.x() * sx, target.y() * sy, target.width() * sx, target.height() * sy);
+                painter->drawPixmap(target, *m_preview, source);
+            }
+        }
     }
 
     if (m_audio->fadeInSpeed() != 0)
@@ -112,7 +145,7 @@ void AudioItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     ShowItem::postPaint(painter);
 }
 
-void AudioItem::setTimeScale(int val)
+void AudioItem::setTimeScale(double val)
 {
     ShowItem::setTimeScale(val);
     calculateWidth();
@@ -139,10 +172,51 @@ Audio *AudioItem::getAudio() const
 
 void AudioItem::updateWaveformPreview()
 {
-    PreviewThread *waveformThread = new PreviewThread;
-    waveformThread->setAudioItem(this);
+    stopWaveformPreview();
+    m_previewGeneration++;
+
+    bool left = m_previewLeftAction->isChecked() || m_previewStereoAction->isChecked();
+    bool right = m_previewRightAction->isChecked() || m_previewStereoAction->isChecked();
+
+    if ((left == false && right == false) || m_audio->getAudioDecoder() == NULL)
+    {
+        setWaveformPreview(QImage(), m_previewGeneration);
+        return;
+    }
+
+    /* A decoder of its own, so reading the file doesn't disturb playback */
+    AudioDecoder *ad = m_audio->doc()->audioPluginCache()->getDecoderForFile(m_audio->getSourceFileName());
+    if (ad == NULL)
+    {
+        setWaveformPreview(QImage(), m_previewGeneration);
+        return;
+    }
+
+    PreviewThread *waveformThread = new PreviewThread(this, ad, left, right,
+                                                      m_audio->totalDuration(), m_previewGeneration);
     connect(waveformThread, SIGNAL(finished()), waveformThread, SLOT(deleteLater()));
+    m_previewThread = waveformThread;
     waveformThread->start();
+}
+
+void AudioItem::stopWaveformPreview()
+{
+    if (m_previewThread.isNull() == false && m_previewThread->isRunning())
+    {
+        m_previewThread->requestInterruption();
+        m_previewThread->wait();
+    }
+}
+
+void AudioItem::setWaveformPreview(const QImage &image, int generation)
+{
+    if (generation != m_previewGeneration)
+        return;
+
+    delete m_preview;
+    m_preview = image.isNull() ? NULL : new QPixmap(QPixmap::fromImage(image));
+    m_previewScaled = QPixmap();
+    update();
 }
 
 void AudioItem::slotAudioChanged(quint32)
@@ -205,9 +279,20 @@ void AudioItem::contextMenuEvent(QGraphicsSceneContextMenuEvent *)
     menu.exec(QCursor::pos());
 }
 
-void PreviewThread::setAudioItem(AudioItem *item)
+PreviewThread::PreviewThread(AudioItem *item, AudioDecoder *decoder,
+                             bool left, bool right, qint64 duration, int generation)
+    : m_item(item)
+    , m_decoder(decoder)
+    , m_left(left)
+    , m_right(right)
+    , m_duration(duration)
+    , m_generation(generation)
 {
-    m_item = item;
+}
+
+PreviewThread::~PreviewThread()
+{
+    delete m_decoder;
 }
 
 qint32 PreviewThread::getSample(const unsigned char *data, quint32 idx, int sampleSize) const
@@ -233,12 +318,12 @@ qint32 PreviewThread::getSample(const unsigned char *data, quint32 idx, int samp
 
 void PreviewThread::run()
 {
-    bool left = m_item->m_previewLeftAction->isChecked() || m_item->m_previewStereoAction->isChecked();
-    bool right = m_item->m_previewRightAction->isChecked() || m_item->m_previewStereoAction->isChecked();
+    bool left = m_left;
+    bool right = m_right;
+    QImage preview;
 
-    if ((left || right) && m_item->m_audio->getAudioDecoder() != NULL)
     {
-        AudioDecoder *ad = m_item->m_audio->doc()->audioPluginCache()->getDecoderForFile(m_item->m_audio->getSourceFileName());
+        AudioDecoder *ad = m_decoder;
         AudioParameters ap = ad->audioParameters();
         ad->seek(0);
         // 1- find out how many samples have to be represented on a single pixel on a 1:1 time scale
@@ -264,23 +349,22 @@ void PreviewThread::run()
         qint64 dataRead = 1;
         unsigned char audioData[onePixelReadLen * 4];
         quint32 audioDataOffset = 0;
-        QPixmap *preview = new QPixmap((50 * m_item->m_audio->totalDuration()) / 1000, 76);
-        preview->fill(Qt::transparent);
-        QPainter p(preview);
+        preview = QImage(qMax<qint64>(1, (50 * m_duration) / 1000), 76, QImage::Format_ARGB32_Premultiplied);
+        preview.fill(Qt::transparent);
+        QPainter p(&preview);
         int xpos = 0;
 
-        qDebug() << "Audio duration:" << m_item->m_audio->totalDuration() <<
-                    ", channels:" << channels << ", pixmap width:" << preview->width() <<
+        qDebug() << "Audio duration:" << m_duration <<
+                    ", channels:" << channels << ", pixmap width:" << preview.width() <<
                     ", maxValue:" << maxValue << ", samples:" << sampleSize;
         qDebug() << "Samples per second:" << oneSecondSamples << ", for one pixel:" << onePixelSamples <<
                     ", onePixelReadLen:" << onePixelReadLen;
 
-        delete m_item->m_preview;
-        m_item->m_preview = NULL;
-        m_item->update();
-
         while (dataRead)
         {
+            if (isInterruptionRequested())
+                return;
+
             quint32 tmpExceedData = 0;
             if (audioDataOffset < onePixelReadLen)
             {
@@ -388,14 +472,12 @@ void PreviewThread::run()
             }
         }
         //qDebug() << "Iterations done: " << xpos;
-        delete ad;
-        m_item->m_preview = preview;
-    }
-    else // no preview selected. Delete pixmap
-    {
-        delete m_item->m_preview;
-        m_item->m_preview = NULL;
     }
 
-    m_item->update();
+    /* Hand the picture to the item on the GUI thread. If the item has gone
+     * by then, Qt drops the call. */
+    AudioItem *item = m_item;
+    int generation = m_generation;
+    QMetaObject::invokeMethod(item, [item, preview, generation]()
+        { item->setWaveformPreview(preview, generation); }, Qt::QueuedConnection);
 }

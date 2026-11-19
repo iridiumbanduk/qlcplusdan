@@ -122,9 +122,51 @@ public:
     /** Set the time (in msec) where bar 1 of the BPM grid starts */
     void setGridOffset(quint32 msec);
 
+    /** QLC+DAN: note value of the BPM grid (see ShowHeaderItem) */
+    void setGridDivision(const QString &division);
+
     /** Return the given time (in msec) snapped to the closest grid line.
      *  The start of the show (0) is always a valid snap point */
     quint32 snapTimeToGrid(quint32 time) const;
+
+    /*********************************************************************
+     * Markers (QLC+DAN)
+     *********************************************************************/
+public:
+    /** Show these markers on the timeline (replaces any shown before) */
+    void setMarkers(const QList<Show::Marker> &markers);
+
+private:
+    /** Place the markers for the current zoom level and view size */
+    void layoutMarkers();
+    /** Stretch each marker's coloured section up to the next marker */
+    void layoutMarkerBands();
+    /** Tell the markers where the visible part of the timeline starts */
+    void updateMarkersViewLeft();
+    void clearMarkers();
+    /** Time for a marker at scene position x, snapped unless noSnap */
+    quint32 markerTimeFromPosition(qreal x, bool noSnap) const;
+
+    QList<ShowMarkerItem *> m_markerItems;
+    QGraphicsSimpleTextItem *m_markerLaneLabel;
+    quint32 m_markerDragTime;
+
+protected slots:
+    void slotMarkerClicked(ShowMarkerItem *item);
+    void slotMarkerDragged(ShowMarkerItem *item, qreal x, bool noSnap);
+    void slotMarkerDropped(ShowMarkerItem *item);
+    void slotMarkerDoubleClicked(ShowMarkerItem *item);
+    void slotMarkerContextMenu(ShowMarkerItem *item, QPoint screenPos);
+    void slotMarkerLaneDoubleClicked(qreal x, bool noSnap);
+    void slotMarkerLaneContextMenu(qreal x, QPoint screenPos);
+
+signals:
+    void markerAddRequested(quint32 time);
+    void markerJumpRequested(quint32 time);
+    void markerMoved(int index, quint32 time);
+    void markerRenameRequested(int index);
+    void markerDeleteRequested(int index);
+    void markerColorRequested(int index, QColor color);
 
     /*********************************************************************
      * Cursor
@@ -138,6 +180,9 @@ public:
 
     /** Get time in milliseconds of the current cursor position */
     quint32 getTimeFromCursor() const;
+
+    /** The exact time the cursor was last set to (not rounded to pixels) */
+    quint32 cursorTime() const;
 
     /** Return position in pixel of a given time (in msec) */
     quint32 getPositionFromTime(quint32 time) const;
@@ -157,12 +202,27 @@ private:
     bool m_snapToGrid;
 
 public slots:
+    void mousePressEvent(QMouseEvent *e) override;
+    void mouseMoveEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
     void wheelEvent(QWheelEvent *event) override;
+
+private:
+    /* QLC+DAN: hold the middle mouse button (press the wheel) and drag to
+     * move around the timeline, like the hand tool in a DAW */
+    bool m_panning;
+    QPoint m_panStartPos;
+    int m_panStartH;
+    int m_panStartV;
 
 protected slots:
     void slotHeaderClicked(QGraphicsSceneMouseEvent *event);
     void slotTimeScaleChanged(int val);
+
+public:
+    /** QLC+DAN: zoom level for a position of the zoom slider. 1 and up are the
+     *  original levels; 0, -1 and -2 zoom in further (1/2, 1/4, 1/8) */
+    static double timeScaleFromSlider(int value);
     void slotTrackClicked(TrackItem *track);
     void slotTrackDoubleClicked(TrackItem *track);
     void slotTrackSoloFlagChanged(TrackItem*, bool);

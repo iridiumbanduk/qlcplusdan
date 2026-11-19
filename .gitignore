@@ -70,3 +70,6 @@ debian/qlcplus-data/
 debian/qlcplus-dbg/
 debian/qlcplus5-dbg/
 debian/tmp/
+
+# Files the Claude app saves into this folder (private project files)
+Claude outputs/
