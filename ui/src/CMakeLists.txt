@@ -59,6 +59,7 @@ add_library(${module_name}
     flowlayout.cpp flowlayout.h
     functionliveeditdialog.cpp functionliveeditdialog.h
     functionmanager.cpp functionmanager.h
+    undomanager.cpp undomanager.h
     functionselection.cpp functionselection.h functionselection.ui
     functionstreewidget.cpp functionstreewidget.h
     functionwizard.cpp functionwizard.h functionwizard.ui

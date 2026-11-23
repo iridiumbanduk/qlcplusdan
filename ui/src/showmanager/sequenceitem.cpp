@@ -153,6 +153,85 @@ void SequenceItem::setDuration(quint32 msec, bool stretch)
     m_chaser->setTotalDuration(msec);
 }
 
+bool SequenceItem::canResize() const
+{
+    return m_chaser != NULL && m_chaser->stepsCount() > 0;
+}
+
+bool SequenceItem::resizeTo(quint32 durationMs, QString *error)
+{
+    // QLC+DAN: only the last step changes, so the rest of the sequence keeps its timing
+    int count = m_chaser->stepsCount();
+    if (count == 0)
+    {
+        if (error) *error = tr("This sequence has no steps");
+        return false;
+    }
+
+    if (m_chaser->durationMode() == Chaser::Common)
+    {
+        uint common = m_chaser->duration();
+        if (common == Function::infiniteSpeed())
+        {
+            if (error) *error = tr("The steps of this sequence hold forever");
+            return false;
+        }
+        if (count == 1)
+        {
+            m_chaser->setDuration(durationMs);
+            return true;
+        }
+        if (durationMs <= (count - 1) * common + 10)
+        {
+            if (error) *error = tr("The last step starts at %1 into the sequence, so it can't end before that")
+                                  .arg(Function::speedToString((count - 1) * common));
+            return false;
+        }
+        // to change only the last step, each step needs its own time:
+        // they all keep the common one
+        for (int i = 0; i < count; i++)
+        {
+            ChaserStep step = *m_chaser->stepAt(i);
+            uint fadeIn = (m_chaser->fadeInMode() == Chaser::Common) ? m_chaser->fadeInSpeed() : step.fadeIn;
+            step.duration = common;
+            step.hold = Function::speedSubtract(common, fadeIn);
+            m_chaser->replaceStep(step, i);
+        }
+        m_chaser->setDurationMode(Chaser::PerStep);
+    }
+
+    quint32 before = 0;
+    for (int i = 0; i < count - 1; i++)
+    {
+        uint d = m_chaser->stepAt(i)->duration;
+        if (d == Function::infiniteSpeed())
+        {
+            if (error) *error = tr("Step %1 holds forever, so the sequence has no end").arg(i + 1);
+            return false;
+        }
+        before += d;
+    }
+
+    if (durationMs <= before + 10)
+    {
+        if (error) *error = tr("The last step starts at %1 into the sequence, so it can't end before that")
+                              .arg(Function::speedToString(before));
+        return false;
+    }
+
+    ChaserStep last = *m_chaser->stepAt(count - 1);
+    last.duration = durationMs - before;
+    uint fadeIn = (m_chaser->fadeInMode() == Chaser::Common) ? m_chaser->fadeInSpeed() : last.fadeIn;
+    if (m_chaser->fadeInMode() == Chaser::PerStep && last.fadeIn > last.duration)
+    {
+        last.fadeIn = last.duration;
+        fadeIn = last.fadeIn;
+    }
+    last.hold = Function::speedSubtract(last.duration, fadeIn);
+    m_chaser->replaceStep(last, count - 1);
+    return true;
+}
+
 QString SequenceItem::functionName() const
 {
     if (m_chaser)

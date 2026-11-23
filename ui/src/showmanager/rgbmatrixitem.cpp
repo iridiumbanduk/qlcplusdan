@@ -105,6 +105,23 @@ void RGBMatrixItem::setDuration(quint32 msec, bool stretch)
     }
 }
 
+bool RGBMatrixItem::canResize() const
+{
+    return true;
+}
+
+bool RGBMatrixItem::resizeTo(quint32 durationMs, QString *error)
+{
+    // QLC+DAN: plays (and repeats) for the new length
+    if (durationMs < 10)
+    {
+        if (error) *error = tr("That's too short");
+        return false;
+    }
+    setDuration(durationMs, false);
+    return true;
+}
+
 quint32 RGBMatrixItem::getDuration() const
 {
     return m_function->duration() ? m_function->duration() : m_matrix->totalDuration();

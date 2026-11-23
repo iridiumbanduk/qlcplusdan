@@ -28,6 +28,7 @@
 
 #define KXMLQLCSequenceSceneValues  QStringLiteral("Values")
 #define KXMLQLCStepNote             QStringLiteral("Note")
+#define KXMLQLCStepParkedValues     QStringLiteral("DanParkedValues")
 
 ChaserStep::ChaserStep(quint32 aFid, uint aFadeIn, uint aHold, uint aFadeOut)
     : fid(aFid)
@@ -46,6 +47,7 @@ ChaserStep::ChaserStep(const ChaserStep& cs)
     , fadeOut(cs.fadeOut)
     , duration(cs.duration)
     , values(cs.values)
+    , parkedValues(cs.parkedValues)
     , note(cs.note)
 {
 }
@@ -60,6 +62,7 @@ ChaserStep &ChaserStep::operator=(const ChaserStep &step)
         fadeOut = step.fadeOut;
         duration = step.duration;
         values = step.values;
+        parkedValues = step.parkedValues;
         note = step.note;
     }
 
@@ -139,6 +142,64 @@ int ChaserStep::unSetValue(SceneValue value, int index)
     return index;
 }
 
+void ChaserStep::parkValue(const SceneValue &value)
+{
+    takeParkedValue(value.fxi, value.channel);
+    // a value of 0 is what the channel comes back as anyway
+    if (value.value != 0)
+    {
+        parkedValues.append(value);
+        std::sort(parkedValues.begin(), parkedValues.end());
+    }
+}
+
+int ChaserStep::takeParkedValue(quint32 fxi, quint32 channel)
+{
+    for (int i = 0; i < parkedValues.count(); i++)
+    {
+        if (parkedValues.at(i).fxi == fxi && parkedValues.at(i).channel == channel)
+            return parkedValues.takeAt(i).value;
+    }
+    return -1;
+}
+
+/* Values as "fixtureID:channel,value,channel,value:fixtureID:..." (non-zero only) */
+static QString valuesToString(const QList <SceneValue> &list)
+{
+    QString str;
+    quint32 fixtureID = Fixture::invalidId();
+    foreach (SceneValue scv, list)
+    {
+        if (scv.value == 0)
+            continue;
+        if (scv.fxi != fixtureID)
+        {
+            if (str.isEmpty() == false)
+                str.append(QString(":"));
+            str.append(QString("%1:").arg(scv.fxi));
+            fixtureID = scv.fxi;
+        }
+        else
+            str.append(QString(","));
+        str.append(QString("%1,%2").arg(scv.channel).arg(scv.value));
+    }
+    return str;
+}
+
+static QList <SceneValue> valuesFromString(const QString &str)
+{
+    QList <SceneValue> list;
+    QStringList fxArray = str.split(":");
+    for (int f = 0; f + 1 < fxArray.count(); f += 2)
+    {
+        quint32 fxID = fxArray.at(f).toUInt();
+        QStringList varray = fxArray.at(f + 1).split(",");
+        for (int i = 0; i + 1 < varray.count(); i += 2)
+            list.append(SceneValue(fxID, varray.at(i).toUInt(), uchar(varray.at(i + 1).toInt())));
+    }
+    return list;
+}
+
 QVariant ChaserStep::toVariant() const
 {
     QList <QVariant> list;
@@ -192,6 +253,11 @@ bool ChaserStep::loadXML(QXmlStreamReader &root, int& stepNumber, Doc *doc)
         stepNumber = attrs.value(KXMLQLCFunctionNumber).toString().toInt();
     if (attrs.hasAttribute(KXMLQLCStepNote) == true)
         note = attrs.value(KXMLQLCStepNote).toString();
+    if (attrs.hasAttribute(KXMLQLCStepParkedValues) == true)
+    {
+        parkedValues = valuesFromString(attrs.value(KXMLQLCStepParkedValues).toString());
+        std::sort(parkedValues.begin(), parkedValues.end());
+    }
 
     if (attrs.hasAttribute(KXMLQLCSequenceSceneValues) == true)
     {
@@ -277,6 +343,13 @@ bool ChaserStep::saveXML(QXmlStreamWriter *doc, int stepNumber, bool isSequence)
     doc->writeAttribute(KXMLQLCFunctionSpeedFadeOut, QString::number(fadeOut));
     if (note.isEmpty() == false)
         doc->writeAttribute(KXMLQLCStepNote, note);
+    /* QLC+DAN: values of switched-off channels. Official QLC+ ignores this */
+    if (isSequence && parkedValues.isEmpty() == false)
+    {
+        QString parked = valuesToString(parkedValues);
+        if (parked.isEmpty() == false)
+            doc->writeAttribute(KXMLQLCStepParkedValues, parked);
+    }
 
     if (isSequence)
     {

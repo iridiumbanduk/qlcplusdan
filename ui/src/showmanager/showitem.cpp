@@ -18,6 +18,8 @@
 */
 
 #include <QGraphicsSceneEvent>
+#include <QGraphicsSceneHoverEvent>
+#include <QFontMetrics>
 #include <QApplication>
 #include <QPainter>
 #include <QDebug>
@@ -36,6 +38,7 @@ ShowItem::ShowItem(ShowFunction *function, QObject *)
     , m_timeScale(3)
     , m_trackIdx(-1)
     , m_function(function)
+    , m_header(NULL)
     , m_alignToCursor(NULL)
     , m_lockAction(NULL)
 {
@@ -43,6 +46,13 @@ ShowItem::ShowItem(ShowFunction *function, QObject *)
 
     setCursor(Qt::OpenHandCursor);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
+
+    // QLC+DAN: dragging the right edge changes the length
+    m_resizing = false;
+    m_resizePreviewEnd = 0;
+    setAcceptHoverEvents(true);
+    m_endAtCursorAction = new QAction(tr("End at cursor"), this);
+    connect(m_endAtCursorAction, &QAction::triggered, this, [this]() { emit endAtCursor(this); });
 
     m_font = qApp->font();
     m_font.setBold(true);
@@ -58,22 +68,49 @@ ShowItem::ShowItem(ShowFunction *function, QObject *)
             this, SLOT(slotLockItemClicked()));
 }
 
+void ShowItem::setHeader(const ShowHeaderItem *header)
+{
+    m_header = header;
+    updateTooltip();
+}
+
 void ShowItem::updateTooltip()
 {
     if (m_function == NULL)
         return;
 
-    setToolTip(QString(tr("Name: %1\nStart time: %2\nDuration: %3\n%4"))
-              .arg(functionName())
-              .arg(Function::speedToString(m_function->startTime()))
-              .arg(Function::speedToString(getDuration()))
-              .arg(tr("Click to move this item along the timeline")));
+    QString start = Function::speedToString(m_function->startTime());
+    QString duration = Function::speedToString(getDuration());
+
+    // QLC+DAN: in BPM shows, also in bars|beats|ticks
+    QString startBars, durationBars;
+    if (m_header != NULL)
+    {
+        startBars = m_header->positionToBars(m_function->startTime());
+        durationBars = m_header->lengthToBars(getDuration());
+    }
+
+    if (startBars.isEmpty())
+    {
+        setToolTip(QString(tr("Name: %1\nStart time: %2\nDuration: %3\n%4"))
+                  .arg(functionName()).arg(start).arg(duration)
+                  .arg(tr("Click to move this item along the timeline")));
+    }
+    else
+    {
+        setToolTip(QString(tr("Name: %1\nStart time: %2   (bar %3)\nDuration: %4   (%5)\n%6\n%7"))
+                  .arg(functionName()).arg(start).arg(startBars).arg(duration).arg(durationBars)
+                  .arg(tr("Bars shown as bar|beat|tick (960 ticks per beat)"))
+                  .arg(tr("Click to move this item along the timeline")));
+    }
 }
 
 QList<QAction *> ShowItem::getDefaultActions() const
 {
     QList<QAction *> actions;
     actions.append(m_alignToCursor);
+    if (canResize() && isLocked() == false)
+        actions.append(m_endAtCursorAction);
 
     if (isLocked())
     {
@@ -223,8 +260,66 @@ void ShowItem::slotLockItemClicked()
     //update();
 }
 
+bool ShowItem::resizeTo(quint32 durationMs, QString *error)
+{
+    Q_UNUSED(durationMs);
+    if (error != NULL)
+        *error = tr("The length of this item can't be changed");
+    return false;
+}
+
+bool ShowItem::onResizeEdge(qreal x) const
+{
+    if (canResize() == false || isLocked())
+        return false;
+    // a few pixels at the right edge, less on very short items
+    qreal zone = qMin<qreal>(6.0, m_width / 3.0);
+    return x >= m_width - zone;
+}
+
+void ShowItem::setResizePreview(quint32 endMs)
+{
+    m_resizePreviewEnd = endMs;
+    update();
+}
+
+void ShowItem::restoreWidth()
+{
+    // the subclasses work out their width again when the scale is set
+    prepareGeometryChange();
+    setTimeScale(m_timeScale);
+    update();
+}
+
+void ShowItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
+{
+    if (m_resizing == false)
+        setCursor(onResizeEdge(event->pos().x()) ? Qt::SizeHorCursor : Qt::OpenHandCursor);
+    QGraphicsItem::hoverMoveEvent(event);
+}
+
+void ShowItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (m_resizing)
+    {
+        emit resizing(this, event->scenePos().x(), event->modifiers() & Qt::ShiftModifier);
+        return;
+    }
+    QGraphicsItem::mouseMoveEvent(event);
+}
+
 void ShowItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    // QLC+DAN: grabbing the right edge changes the length instead of moving
+    if (event->button() == Qt::LeftButton && onResizeEdge(event->pos().x()))
+    {
+        m_resizing = true;
+        m_resizePreviewEnd = m_function->startTime() + getDuration();
+        setSelected(true);
+        event->accept();
+        return;
+    }
+
     QGraphicsItem::mousePressEvent(event);
     m_pos = this->pos();
     if (event->button() == Qt::LeftButton)
@@ -234,6 +329,15 @@ void ShowItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void ShowItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    if (m_resizing)
+    {
+        m_resizing = false;
+        setCursor(Qt::OpenHandCursor);
+        update();
+        emit resizeFinished(this);
+        return;
+    }
+
     QGraphicsItem::mouseReleaseEvent(event);
     qDebug() << Q_FUNC_INFO << "mouse RELEASE event - <" << event->pos().toPoint().x() << "> - <" << event->pos().toPoint().y() << ">";
     setCursor(Qt::OpenHandCursor);
@@ -307,7 +411,25 @@ void ShowItem::postPaint(QPainter *painter)
         if (x() > TRACK_WIDTH)
             s_time = (double)(x() - TRACK_WIDTH - 2) * (m_timeScale * 500) /
                      (double)(HALF_SECOND_WIDTH);
-        painter->drawText(3, TRACK_HEIGHT - 10, Function::speedToString(s_time));
+        QString text = Function::speedToString(s_time);
+        // QLC+DAN: and where that is in bars and beats
+        if (m_header != NULL && m_header->positionToBars(s_time).isEmpty() == false)
+            text += "   " + m_header->positionToBars(s_time);
+        painter->drawText(3, TRACK_HEIGHT - 10, text);
+    }
+
+    // QLC+DAN: where the end will be while its edge is being dragged
+    if (m_resizing)
+    {
+        QString text = tr("End: %1").arg(Function::speedToString(m_resizePreviewEnd));
+        if (m_header != NULL && m_header->positionToBars(m_resizePreviewEnd).isEmpty() == false)
+            text += "   " + m_header->positionToBars(m_resizePreviewEnd);
+        QFontMetrics fm(painter->font());
+        int w = fm.horizontalAdvance(text) + 6;
+        int x = qMax(3, m_width - w);
+        painter->fillRect(QRect(x - 2, TRACK_HEIGHT - 24, w, 16), QColor(0, 0, 0, 140));
+        painter->setPen(Qt::white);
+        painter->drawText(x, TRACK_HEIGHT - 12, text);
     }
 }
 

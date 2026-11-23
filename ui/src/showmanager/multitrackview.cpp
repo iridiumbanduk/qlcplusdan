@@ -21,6 +21,8 @@
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsProxyWidget>
 #include <QColorDialog>
+#include <QToolTip>
+#include <QCursor>
 #include <algorithm>
 #include <QPainter>
 #include <QMenu>
@@ -80,6 +82,7 @@ MultiTrackView::MultiTrackView(QWidget *parent) :
     m_markerLaneLabel->setPos(6, (MARKER_LANE_HEIGHT - m_markerLaneLabel->boundingRect().height()) / 2);
     m_markerDragTime = 0;
     m_panning = false;
+    m_resizeEnd = 0;
     m_panStartH = 0;
     m_panStartV = 0;
 
@@ -222,6 +225,7 @@ void MultiTrackView::setItemCommonProperties(ShowItem *item, ShowFunction *func,
     qDebug() << "[" << func->functionID() << "] Start time:" << func->startTime() << "Duration:" << func->duration();
 
     item->setTrackIndex(trackNum);
+    item->setHeader(m_header);
 
     double timeScale = timeScaleFromSlider(m_timeSlider->value());
 
@@ -239,6 +243,12 @@ void MultiTrackView::setItemCommonProperties(ShowItem *item, ShowFunction *func,
             this, SLOT(slotItemMoved(QGraphicsSceneMouseEvent *, ShowItem *)));
     connect(item, SIGNAL(alignToCursor(ShowItem*)),
             this, SLOT(slotAlignToCursor(ShowItem*)));
+    connect(item, SIGNAL(resizing(ShowItem*,qreal,bool)),
+            this, SLOT(slotItemResizing(ShowItem*,qreal,bool)));
+    connect(item, SIGNAL(resizeFinished(ShowItem*)),
+            this, SLOT(slotItemResizeFinished(ShowItem*)));
+    connect(item, SIGNAL(endAtCursor(ShowItem*)),
+            this, SLOT(slotItemEndAtCursor(ShowItem*)));
     m_scene->addItem(item);
     m_items.append(item);
     int new_scene_width = item->x() + item->getWidth();
@@ -447,6 +457,16 @@ quint32 MultiTrackView::getTimeFromCursor() const
     return s_time;
 }
 
+int MultiTrackView::zoomLevel() const
+{
+    return m_timeSlider->value();
+}
+
+void MultiTrackView::setZoomLevel(int level)
+{
+    m_timeSlider->setValue(level);
+}
+
 quint32 MultiTrackView::cursorTime() const
 {
     return m_cursor->getTime();
@@ -484,6 +504,14 @@ int MultiTrackView::getTrackIndex(const Track *trk) const
 void MultiTrackView::setHeaderType(Show::TimeDivision type)
 {
     m_header->setTimeDivisionType(type);
+    updateItemTooltips();
+}
+
+void MultiTrackView::updateItemTooltips()
+{
+    // QLC+DAN: the bars and beats in the tooltips depend on the tempo and bar 1
+    foreach (ShowItem *item, m_items)
+        item->updateTooltip();
 }
 
 Show::TimeDivision MultiTrackView::getHeaderType() const
@@ -494,6 +522,7 @@ Show::TimeDivision MultiTrackView::getHeaderType() const
 void MultiTrackView::setBPMValue(int value)
 {
     m_header->setBPMValue(value);
+    updateItemTooltips();
 }
 
 void MultiTrackView::setSnapToGrid(bool enable)
@@ -508,6 +537,7 @@ void MultiTrackView::setSnapToGrid(bool enable)
 void MultiTrackView::setGridOffset(quint32 msec)
 {
     m_header->setGridOffset(msec);
+    updateItemTooltips();
 }
 
 quint32 MultiTrackView::snapTimeToGrid(quint32 time) const
@@ -522,6 +552,27 @@ void MultiTrackView::setGridDivision(const QString &division)
 
 void MultiTrackView::mousePressEvent(QMouseEvent *e)
 {
+    // QLC+DAN: Alt+click sets where the selected item ends (Alt+Shift: no snapping)
+    if (e->button() == Qt::LeftButton && (e->modifiers() & Qt::AltModifier))
+    {
+        ShowItem *item = getSelectedItem();
+        if (item != NULL)
+        {
+            qreal x = qMax<qreal>(TRACK_WIDTH, mapToScene(e->pos()).x());
+            quint32 end = getTimeFromPosition(x);
+            if (m_snapToGrid && !(e->modifiers() & Qt::ShiftModifier))
+                end = snapTimeToGrid(end);
+            setItemEnd(item, end);
+        }
+        else
+        {
+            QToolTip::showText(e->globalPosition().toPoint(),
+                               tr("Select a sequence, EFX or RGB matrix first, then Alt+click where it should end"), this);
+        }
+        e->accept();
+        return;
+    }
+
     if (e->button() == Qt::MiddleButton)
     {
         m_panning = true;
@@ -917,4 +968,67 @@ void MultiTrackView::slotMarkerLaneContextMenu(qreal x, QPoint screenPos)
     QAction *add = menu.addAction(tr("Add marker here"));
     if (menu.exec(screenPos) == add)
         emit markerAddRequested(time);
+}
+
+/*********************************************************************
+ * Changing where an item ends (QLC+DAN)
+ *********************************************************************/
+
+bool MultiTrackView::setItemEnd(ShowItem *item, quint32 endTime)
+{
+    QString error;
+    quint32 start = item->getStartTime();
+
+    if (item->canResize() == false)
+        error = tr("The length of this item can't be changed");
+    else if (item->isLocked())
+        error = tr("This item is locked");
+    else if (endTime <= start)
+        error = tr("That's before the item starts");
+    else if (item->resizeTo(endTime - start, &error))
+    {
+        item->restoreWidth();
+        updateViewSize();
+        m_scene->update();
+        emit showItemResized(item);
+        return true;
+    }
+
+    item->restoreWidth();
+    QToolTip::showText(QCursor::pos(), error, this);
+    return false;
+}
+
+void MultiTrackView::slotItemResizing(ShowItem *item, qreal sceneX, bool noSnap)
+{
+    quint32 start = item->getStartTime();
+    quint32 end = getTimeFromPosition(qMax<qreal>(TRACK_WIDTH, sceneX));
+    if (m_snapToGrid && noSnap == false)
+        end = snapTimeToGrid(end);
+    if (end <= start)
+        end = start + 1;
+    m_resizeEnd = end;
+
+    // show the new end straight away; the real length is set on release
+    int width = qMax(4, int(getPositionFromTime(end)) - int(getPositionFromTime(start)));
+    item->setWidth(width);
+    item->setResizePreview(end);
+    m_scene->update();
+}
+
+void MultiTrackView::slotItemResizeFinished(ShowItem *item)
+{
+    if (m_resizeEnd == 0)
+    {
+        item->restoreWidth();
+        return;
+    }
+    quint32 end = m_resizeEnd;
+    m_resizeEnd = 0;
+    setItemEnd(item, end);
+}
+
+void MultiTrackView::slotItemEndAtCursor(ShowItem *item)
+{
+    setItemEnd(item, m_cursor->getTime());
 }

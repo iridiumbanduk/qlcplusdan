@@ -122,6 +122,8 @@ ShowManager::ShowManager(QWidget* parent, Doc* doc)
 
     connect(m_showview, SIGNAL(showItemMoved(ShowItem*,quint32,bool)),
             this, SLOT(slotShowItemMoved(ShowItem*,quint32,bool)));
+    connect(m_showview, SIGNAL(showItemResized(ShowItem*)),
+            this, SLOT(slotShowItemResized(ShowItem*)));
     connect(m_showview, SIGNAL(timeChanged(quint32)),
             this, SLOT(slotUpdateTime(quint32)));
     connect(m_showview, SIGNAL(trackClicked(Track*)),
@@ -555,6 +557,40 @@ void ShowManager::updateShowsCombo()
         updateMultiTrackView();
 }
 
+QVariantMap ShowManager::viewState() const
+{
+    QVariantMap state;
+    if (m_show == NULL)
+        return state;
+    state["show"] = m_show->id();
+    state["zoom"] = m_showview->zoomLevel();
+    state["cursor"] = m_showview->cursorTime();
+    state["h"] = m_showview->horizontalScrollBar()->value();
+    state["v"] = m_showview->verticalScrollBar()->value();
+    return state;
+}
+
+void ShowManager::restoreViewState(const QVariantMap &state)
+{
+    if (state.isEmpty())
+        return;
+
+    int idx = m_showsCombo->findData(QVariant(state.value("show").toUInt()));
+    if (idx < 0)
+        return; // that show doesn't exist any more
+    if (idx != m_showsCombo->currentIndex())
+        m_showsCombo->setCurrentIndex(idx);
+    else if (m_show == NULL)
+        slotShowsComboChanged(idx);
+
+    m_showview->setZoomLevel(state.value("zoom").toInt());
+    quint32 cursor = state.value("cursor").toUInt();
+    m_showview->moveCursor(cursor);
+    slotUpdateTime(cursor);
+    m_showview->horizontalScrollBar()->setValue(state.value("h").toInt());
+    m_showview->verticalScrollBar()->setValue(state.value("v").toInt());
+}
+
 void ShowManager::slotShowsComboChanged(int idx)
 {
     qDebug() << Q_FUNC_INFO << "Idx: " << idx;
@@ -646,6 +682,9 @@ void ShowManager::showRightEditor(Function *function)
              *  When a step is clicked apply values immediately */
             connect(m_currentEditor, SIGNAL(applyValues(QList<SceneValue>&)),
                     m_sceneEditor, SLOT(slotSetSceneValues(QList <SceneValue>&)));
+            // QLC+DAN: and the values of switched-off channels
+            connect(m_currentEditor, SIGNAL(applyParkedValues(QList<SceneValue>&)),
+                    m_sceneEditor, SLOT(slotSetParkedValues(QList <SceneValue>&)));
 
             /** Signal from scene editor to chaser editor.
              *  When a fixture value is changed, update the selected chaser step */
@@ -1705,6 +1744,15 @@ void ShowManager::slotChangeSize(int width, int height)
 {
     if (m_showview != NULL)
         m_showview->setViewSize(width, height);
+}
+
+void ShowManager::slotShowItemResized(ShowItem *item)
+{
+    // the sequence editor below the timeline shows step times: refresh them
+    ChaserEditor *editor = qobject_cast<ChaserEditor*>(m_currentEditor);
+    if (editor != NULL && item != NULL && item->functionID() == m_editorFunctionID)
+        editor->refreshSteps();
+    m_doc->setModified();
 }
 
 void ShowManager::slotStepSelectionChanged(int index)

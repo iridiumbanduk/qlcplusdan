@@ -70,6 +70,8 @@ public:
 public slots:
     void slotFunctionManagerActive(bool active);
     void slotSetSceneValues(QList <SceneValue>&);
+    /** QLC+DAN: show a sequence step's parked values on switched-off channels */
+    void slotSetParkedValues(QList <SceneValue>&);
 
 protected slots:
     void slotFixtureRemoved(quint32 id);

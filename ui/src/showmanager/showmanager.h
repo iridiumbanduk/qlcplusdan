@@ -21,6 +21,7 @@
 #define SHOWMANAGER_H
 
 #include <QGraphicsView>
+#include <QVariantMap>
 #include <QWidget>
 #include <QList>
 
@@ -62,6 +63,11 @@ public:
 
     /** Start from scratch; clear everything */
     void clearContents();
+
+    /** QLC+DAN: what is on screen (show, zoom, scroll, cursor), so it can be
+     *  put back after Undo rebuilds everything */
+    QVariantMap viewState() const;
+    void restoreViewState(const QVariantMap &state);
 
 signals:
     /** Emitted when the FunctionManager's tab is de/activated */
@@ -238,6 +244,8 @@ protected slots:
     void slotToggleSnapToGrid(bool enable);
     void slotChangeSize(int width, int height);
     void slotStepSelectionChanged(int index);
+    /** QLC+DAN: an item's end was changed on the timeline */
+    void slotShowItemResized(ShowItem *item);
 
     /*********************************************************************
      * Doc events

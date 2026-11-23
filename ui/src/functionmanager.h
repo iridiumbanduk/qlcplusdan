@@ -85,6 +85,9 @@ public:
     /** Select the function with the given ID */
     void selectFunction(quint32 id);
 
+    /** QLC+DAN: the ID of the one selected function, or Function::invalidId() */
+    quint32 currentFunctionId() const;
+
 private:
     /** Init the splitter view */
     void initSplitterView();

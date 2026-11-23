@@ -271,6 +271,24 @@ bool FixtureConsole::hasSelections() const
     return false;
 }
 
+void FixtureConsole::showParkedValues(const QList <SceneValue> &parked)
+{
+    foreach (ConsoleChannel *cc, m_channels)
+    {
+        if (cc->isChecked())
+            continue;
+
+        uchar value = 0;
+        foreach (const SceneValue &sv, parked)
+        {
+            if (sv.fxi == m_fixture && sv.channel == cc->channelIndex())
+                value = sv.value;
+        }
+        // display only: signals blocked, the channel stays off
+        cc->setValue(value, false);
+    }
+}
+
 void FixtureConsole::setValues(const QList <SceneValue>& list, bool fromSelection)
 {
     QList<ConsoleChannel *> toUncheckList = m_channels;

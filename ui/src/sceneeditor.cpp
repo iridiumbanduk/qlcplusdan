@@ -167,6 +167,15 @@ void SceneEditor::slotSetSceneValues(QList <SceneValue>&sceneValues)
     m_linkSuspended--;
 }
 
+void SceneEditor::slotSetParkedValues(QList <SceneValue> &parked)
+{
+    foreach (FixtureConsole *fc, m_consoleList)
+    {
+        if (fc != NULL)
+            fc->showParkedValues(parked);
+    }
+}
+
 void SceneEditor::slotFixtureRemoved(quint32 id)
 {
     removeFixtureTab(id);

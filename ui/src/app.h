@@ -31,6 +31,7 @@
 #include "doc.h"
 
 class QProgressDialog;
+class UndoManager;
 class VideoProvider;
 class QMessageBox;
 class QToolButton;
@@ -186,6 +187,8 @@ private:
     QAction* m_fileOpenAction;
     QAction* m_fileSaveAction;
     QAction* m_fileSaveAsAction;
+    /** QLC+DAN: project-wide Undo / Redo */
+    UndoManager* m_undoManager;
 
     QAction* m_modeToggleAction;
     QAction* m_controlMonitorAction;

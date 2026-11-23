@@ -81,6 +81,13 @@ public:
     void setGridDivision(const QString &division);
     QString getGridDivision() const;
 
+    /** QLC+DAN: a position as bar|beat|tick, counted from where bar 1
+     *  starts (the grid offset). Before bar 1 the bars go 0, -1, -2...
+     *  960 ticks to a beat. Empty in Time mode */
+    QString positionToBars(qint64 ms) const;
+    /** A length as bars|beats|ticks. Empty in Time mode */
+    QString lengthToBars(qint64 ms) const;
+
     /** Return the grid position closest to the given time. The grid restarts
      *  at every bar, so divisions that don't fit a bar exactly (e.g. halves
      *  in 3/4) still line up with the bars, like in a DAW */

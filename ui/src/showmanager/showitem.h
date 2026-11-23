@@ -48,6 +48,8 @@ class ShowFunction;
  *                         the lock icon and the dragging time
  */
 
+class ShowHeaderItem;
+
 class ShowItem : public QObject, public QGraphicsItem
 {
     Q_OBJECT
@@ -56,12 +58,16 @@ class ShowItem : public QObject, public QGraphicsItem
 public:
     ShowItem(ShowFunction *function, QObject *parent = 0);
 
-protected:
+    /** QLC+DAN: the timeline ruler, used to show positions in bars and beats */
+    void setHeader(const ShowHeaderItem *header);
+
     /**
      * @brief updateTooltip update the item's tooltip with the latest
      * timing information
      */
     void updateTooltip();
+
+protected:
 
     /**
      * @brief getDefaultActions get the list of the default actions
@@ -254,6 +260,41 @@ signals:
      */
     void alignToCursor(ShowItem *);
 
+    /** QLC+DAN: the right edge is being dragged (the view decides the snapped end) */
+    void resizing(ShowItem *item, qreal sceneX, bool noSnap);
+    /** QLC+DAN: the right edge has been let go */
+    void resizeFinished(ShowItem *item);
+    /** QLC+DAN: "End at cursor" was chosen from the item's menu */
+    void endAtCursor(ShowItem *item);
+
+    /*********************************************************************
+     * Changing the end of an item (QLC+DAN)
+     *********************************************************************/
+public:
+    /** Whether the item's length can be changed by dragging its end or
+     *  Alt+clicking (sequences, EFX and RGB matrices) */
+    virtual bool canResize() const { return false; }
+
+    /** Make the item last $durationMs. For items with steps, only the last
+     *  step changes. On failure, $error says why */
+    virtual bool resizeTo(quint32 durationMs, QString *error);
+
+    /** Where the end is while being dragged (drawn on the item) */
+    void setResizePreview(quint32 endMs);
+
+    /** Back to the width that matches the item's real length */
+    void restoreWidth();
+
+protected:
+    void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    /** True when $x (item coordinates) is on the grab zone of the right edge */
+    bool onResizeEdge(qreal x) const;
+
+    bool m_resizing;
+    quint32 m_resizePreviewEnd;
+    QAction *m_endAtCursorAction;
+
 protected:
     /**
      * @brief mousePressEvent overridden method to handle the mouse pressure over the item.
@@ -301,6 +342,9 @@ protected:
 
     /** The ShowFunction associated to this item */
     ShowFunction *m_function;
+
+    /** QLC+DAN: the timeline ruler (for bars and beats), or NULL */
+    const ShowHeaderItem *m_header;
 
     /** Contextual menu actions */
     QAction *m_alignToCursor;

@@ -54,6 +54,10 @@ public:
     /** @reimp */
     void setDuration(quint32 msec, bool stretch) override;
 
+    /** QLC+DAN: change the length by dragging the end or Alt+clicking */
+    bool canResize() const override;
+    bool resizeTo(quint32 durationMs, QString *error) override;
+
     /** @reimp */
     QString functionName() const override;
 

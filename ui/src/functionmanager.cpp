@@ -749,6 +749,14 @@ void FunctionManager::selectFunction(quint32 id)
         m_tree->setCurrentItem(item);
 }
 
+quint32 FunctionManager::currentFunctionId() const
+{
+    QList<QTreeWidgetItem *> selected = m_tree->selectedItems();
+    if (selected.count() != 1)
+        return Function::invalidId();
+    return m_tree->itemFunctionId(selected.first());
+}
+
 void FunctionManager::deleteSelectedFunctions()
 {
     QListIterator <QTreeWidgetItem*> it(m_tree->selectedItems());
@@ -922,6 +930,9 @@ void FunctionManager::editFunction(Function* function)
                 /** Signal from chaser editor to scene editor. When a step is clicked apply values immediately */
                 connect(m_editor, SIGNAL(applyValues(QList<SceneValue>&)),
                         m_scene_editor, SLOT(slotSetSceneValues(QList <SceneValue>&)));
+                // QLC+DAN: and the values of switched-off channels
+                connect(m_editor, SIGNAL(applyParkedValues(QList<SceneValue>&)),
+                        m_scene_editor, SLOT(slotSetParkedValues(QList <SceneValue>&)));
                 /** Signal from scene editor to chaser editor. When a fixture value is changed, update the selected chaser step */
                 connect(m_scene_editor, SIGNAL(fixtureValueChanged(SceneValue, bool)),
                         m_editor, SLOT(slotUpdateCurrentStep(SceneValue, bool)));

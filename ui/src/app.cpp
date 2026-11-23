@@ -43,6 +43,7 @@
 #include "aboutbox.h"
 #include "monitor.h"
 #include "vcframe.h"
+#include "undomanager.h"
 #include "app.h"
 #include "doc.h"
 
@@ -111,6 +112,7 @@ App::App()
     , m_fileOpenAction(NULL)
     , m_fileSaveAction(NULL)
     , m_fileSaveAsAction(NULL)
+    , m_undoManager(NULL)
 
     , m_modeToggleAction(NULL)
     , m_controlMonitorAction(NULL)
@@ -140,6 +142,10 @@ App::App()
 
 App::~App()
 {
+    // QLC+DAN: stop undo before anything it looks at goes away
+    delete m_undoManager;
+    m_undoManager = NULL;
+
     QSettings settings;
 
     // Don't save kiosk-mode window geometry because that will screw things up
@@ -699,6 +705,9 @@ void App::initActions()
     m_fileSaveAsAction = new QAction(QIcon(":/filesaveas.png"), tr("Save &As..."), this);
     connect(m_fileSaveAsAction, SIGNAL(triggered(bool)), this, SLOT(slotFileSaveAs()));
 
+    /* QLC+DAN: Undo / Redo */
+    m_undoManager = new UndoManager(m_doc, this);
+
     /* Control actions */
     m_modeToggleAction = new QAction(QIcon(":/operate.png"), tr("&Operate"), this);
     m_modeToggleAction->setToolTip(tr("Switch to operate mode"));
@@ -790,6 +799,9 @@ void App::initToolBar()
     m_toolbar->addAction(m_fileOpenAction);
     m_toolbar->addAction(m_fileSaveAction);
     m_toolbar->addAction(m_fileSaveAsAction);
+    m_toolbar->addSeparator();
+    m_toolbar->addAction(m_undoManager->undoAction());
+    m_toolbar->addAction(m_undoManager->redoAction());
     m_toolbar->addSeparator();
     m_toolbar->addAction(m_controlMonitorAction);
     m_toolbar->addAction(m_addressToolAction);

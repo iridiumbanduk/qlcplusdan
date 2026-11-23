@@ -125,6 +125,19 @@ public:
     /** QLC+DAN: note value of the BPM grid (see ShowHeaderItem) */
     void setGridDivision(const QString &division);
 
+    /** QLC+DAN: refresh the items' tooltips (start/duration in bars and beats) */
+    void updateItemTooltips();
+
+    /** QLC+DAN: make $item end at $endTime. For items with steps only the
+     *  last step changes. Shows why if it can't */
+    bool setItemEnd(ShowItem *item, quint32 endTime);
+
+private:
+    /** Where a dragged item end currently is */
+    quint32 m_resizeEnd;
+
+public:
+
     /** Return the given time (in msec) snapped to the closest grid line.
      *  The start of the show (0) is always a valid snap point */
     quint32 snapTimeToGrid(quint32 time) const;
@@ -181,6 +194,10 @@ public:
     /** Get time in milliseconds of the current cursor position */
     quint32 getTimeFromCursor() const;
 
+    /** QLC+DAN: position of the zoom slider */
+    int zoomLevel() const;
+    void setZoomLevel(int level);
+
     /** The exact time the cursor was last set to (not rounded to pixels) */
     quint32 cursorTime() const;
 
@@ -215,14 +232,14 @@ private:
     int m_panStartH;
     int m_panStartV;
 
-protected slots:
-    void slotHeaderClicked(QGraphicsSceneMouseEvent *event);
-    void slotTimeScaleChanged(int val);
-
 public:
     /** QLC+DAN: zoom level for a position of the zoom slider. 1 and up are the
      *  original levels; 0, -1 and -2 zoom in further (1/2, 1/4, 1/8) */
     static double timeScaleFromSlider(int value);
+
+protected slots:
+    void slotHeaderClicked(QGraphicsSceneMouseEvent *event);
+    void slotTimeScaleChanged(int val);
     void slotTrackClicked(TrackItem *track);
     void slotTrackDoubleClicked(TrackItem *track);
     void slotTrackSoloFlagChanged(TrackItem*, bool);
@@ -231,9 +248,15 @@ public:
 
     void slotItemMoved(QGraphicsSceneMouseEvent *event, ShowItem *item);
     void slotAlignToCursor(ShowItem *item);
+    /* QLC+DAN: changing where an item ends */
+    void slotItemResizing(ShowItem *item, qreal sceneX, bool noSnap);
+    void slotItemResizeFinished(ShowItem *item);
+    void slotItemEndAtCursor(ShowItem *item);
 
 signals:
     void showItemMoved(ShowItem *item, quint32 time, bool moved);
+    /** QLC+DAN: an item's length was changed */
+    void showItemResized(ShowItem *item);
     void viewClicked(QMouseEvent * e);
     void timeChanged(quint32 msec);
     void trackClicked(Track *track);

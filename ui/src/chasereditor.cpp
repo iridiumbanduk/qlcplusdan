@@ -343,8 +343,10 @@ void ChaserEditor::slotUpdateCurrentStep(SceneValue sv, bool enabled)
         if (created == true)
         {
             // this means the provided Scene value is new - for EVERY step.
-            // All the non-selected steps should include the new value, but set to 0
-            sv.value = 0;
+            // All the non-selected steps should include the new value, but set to 0.
+            // QLC+DAN: ...or to the value they had when the channel was switched
+            // off. The selected step takes what its fader shows (its parked value)
+            m_chaser->stepAt(idx)->takeParkedValue(sv.fxi, sv.channel);
 
             for (int i = 0; i < m_chaser->stepsCount(); i++)
             {
@@ -353,13 +355,25 @@ void ChaserEditor::slotUpdateCurrentStep(SceneValue sv, bool enabled)
                 if (i == idx)
                     continue;
 
-                m_chaser->stepAt(i)->setValue(sv, svIndex);
+                int parked = m_chaser->stepAt(i)->takeParkedValue(sv.fxi, sv.channel);
+                SceneValue restored(sv.fxi, sv.channel, parked < 0 ? 0 : uchar(parked));
+                m_chaser->stepAt(i)->setValue(restored, svIndex);
                 qDebug() << "[slotUpdateCurrentStep] Value added to step: " << i << "@pos" << svIndex;
             }
         }
     }
     else
     {
+        // QLC+DAN: keep every step's value for this channel, so switching it
+        // back on restores them
+        for (int i = 0; i < m_chaser->stepsCount(); i++)
+        {
+            ChaserStep *step = m_chaser->stepAt(i);
+            int vIdx = step->values.indexOf(sv);
+            if (vIdx >= 0)
+                step->parkValue(step->values.at(vIdx));
+        }
+
         int svIndex = m_chaser->stepAt(idx)->unSetValue(sv);
 
         if (svIndex == -1)
@@ -1361,6 +1375,12 @@ void ChaserEditor::updateClipboardButtons()
         m_pasteAction->setEnabled(false);
 }
 
+void ChaserEditor::refreshSteps()
+{
+    updateTree();
+    updateSpeedDials();
+}
+
 void ChaserEditor::applyStepValues()
 {
     QList <QTreeWidgetItem*> selected(m_tree->selectedItems());
@@ -1376,6 +1396,8 @@ void ChaserEditor::applyStepValues()
 
             if (step.values.count() > 0)
                 emit applyValues(step.values);
+            // QLC+DAN: always, so the faders of switched-off channels are refreshed
+            emit applyParkedValues(step.parkedValues);
         }
     }
 }

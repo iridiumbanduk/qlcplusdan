@@ -323,6 +323,50 @@ double ShowHeaderItem::effectiveDivisionBeats() const
     return m_timeHit;
 }
 
+/* Times are whole milliseconds, and 1 ms is about 2 ticks, so a position
+ * snapped to a beat can come out a tick or two off: show it on the beat */
+static qint64 roundToBeat(qint64 ticks)
+{
+    qint64 r = ((ticks % 960) + 960) % 960;
+    if (r <= 2)
+        return ticks - r;
+    if (r >= 958)
+        return ticks + (960 - r);
+    return ticks;
+}
+
+static QString barsText(qint64 bars, int beats, int ticks)
+{
+    return QString("%1|%2|%3").arg(bars).arg(beats).arg(ticks, 3, 10, QChar('0'));
+}
+
+QString ShowHeaderItem::positionToBars(qint64 ms) const
+{
+    if (m_type == Show::Time || m_BPMValue <= 0)
+        return QString();
+
+    double beatMs = 60000.0 / (double)m_BPMValue;
+    // in ticks, rounded once, so nothing shows 960 ticks
+    qint64 ticksPerBar = 960 * m_timeHit;
+    qint64 ticks = roundToBeat(qRound64(((double)ms - getGridOffsetMs()) / beatMs * 960.0));
+    qint64 bar = (ticks >= 0) ? ticks / ticksPerBar : -((-ticks + ticksPerBar - 1) / ticksPerBar);
+    qint64 inBar = ticks - bar * ticksPerBar;
+
+    // bar index 0 is bar 1; the one before it is bar 0, then -1...
+    return barsText(bar + 1, int(inBar / 960) + 1, int(inBar % 960));
+}
+
+QString ShowHeaderItem::lengthToBars(qint64 ms) const
+{
+    if (m_type == Show::Time || m_BPMValue <= 0)
+        return QString();
+
+    double beatMs = 60000.0 / (double)m_BPMValue;
+    qint64 ticksPerBar = 960 * m_timeHit;
+    qint64 ticks = roundToBeat(qRound64((double)ms / beatMs * 960.0));
+    return barsText(ticks / ticksPerBar, int((ticks % ticksPerBar) / 960), int(ticks % 960));
+}
+
 quint32 ShowHeaderItem::snapTime(quint32 time) const
 {
     double snapped;
@@ -444,9 +488,10 @@ void ShowHeaderItem::paintBPMGrid(QPainter *painter)
             painter->setPen(QPen(barLine, 1));
             painter->drawLine(QPointF(barX, RULER_HEIGHT), QPointF(barX, lineBottom));
         }
-        if (b >= 0 && b % labelEvery == 0)
+        if (((b % labelEvery) + labelEvery) % labelEvery == 0)
         {
-            painter->setPen(QPen(Qt::black, 1));
+            // bars before bar 1 (0, -1, -2...) are greyed
+            painter->setPen(QPen(b >= 0 ? QColor(Qt::black) : QColor(80, 80, 80), 1));
             painter->drawText(QPointF(barX - 4, 15), QString::number(b + 1));
         }
     }

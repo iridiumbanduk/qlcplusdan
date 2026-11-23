@@ -67,6 +67,8 @@ private:
 
 signals:
     void applyValues(QList<SceneValue>&);
+    /** QLC+DAN: the selected step's parked values (switched-off channels) */
+    void applyParkedValues(QList<SceneValue>&);
     void stepSelectionChanged(int index);
 
 public slots:
@@ -176,6 +178,13 @@ private slots:
 
 private:
     int getCurrentIndex() const;
+
+public:
+    /** QLC+DAN: show the steps' current times again (e.g. after the last
+     *  step was changed from the timeline) */
+    void refreshSteps();
+
+private:
 
     /************************************************************************
      * Utilities

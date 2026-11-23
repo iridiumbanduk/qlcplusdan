@@ -61,6 +61,12 @@ public:
 
     int unSetValue(SceneValue value, int index = -1);
 
+    /** QLC+DAN: keep the value of a channel that has been switched off in
+     *  the sequence, so switching it back on can restore it */
+    void parkValue(const SceneValue &value);
+    /** Remove and return the parked value of a channel, or -1 if there is none */
+    int takeParkedValue(quint32 fxi, quint32 channel);
+
     /************************************************************************
      * QVariant operations
      ***********************************************************************/
@@ -90,6 +96,9 @@ public:
     uint fadeOut;                //! Fade out speed
     uint duration;               //! Duration
     QList <SceneValue> values;   //! specific DMX values for this step (chaser in sequence mode)
+    /** QLC+DAN: values of channels switched off in the sequence (see parkValue).
+     *  Saved in an extra attribute that the official QLC+ ignores */
+    QList <SceneValue> parkedValues;
     QString note;
 };
 

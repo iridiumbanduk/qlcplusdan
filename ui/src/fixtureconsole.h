@@ -118,6 +118,12 @@ public:
     /** Reset all the channels stylesheet to the original value */
     void resetChannelsStylesheet();
 
+public:
+    /** QLC+DAN: show the parked values of switched-off channels on their
+     *  (greyed) faders, without switching them on or changing anything.
+     *  Switched-off channels without a parked value show 0 */
+    void showParkedValues(const QList <SceneValue> &parked);
+
 signals:
     /** Emitted when the value of a channel object changes */
     void valueChanged(quint32 fxi, quint32 channel, uchar value);
