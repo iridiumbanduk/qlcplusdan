@@ -15,7 +15,12 @@ if(NOT ANDROID AND NOT IOS)
 
     add_subdirectory(dmxusb)
     add_subdirectory(peperoni)
-    add_subdirectory(udmx)
+    # QLC+DAN: uDMX needs libusb, which MSYS2 no longer ships for MINGW64
+    if(LIBUSB_1_FOUND OR NOT WIN32)
+        add_subdirectory(udmx)
+    else()
+        message(WARNING "libusb-1.0 not found: the uDMX plugin is not built")
+    endif()
     add_subdirectory(midi)
     add_subdirectory(enttecwing)
     add_subdirectory(hid)

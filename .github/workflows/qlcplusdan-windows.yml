@@ -84,23 +84,23 @@ jobs:
       - name: Update and install MSYS2 (64bit)
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ucrt64
+          msystem: mingw64
           release: true
           update: false
           path-type: inherit
+          suppress-deprecation-warnings: msystem-mingw64
           install: >-
             wget
             unzip
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-gcc-libs
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-libmad
-            mingw-w64-ucrt-x86_64-libsndfile
-            mingw-w64-ucrt-x86_64-flac
-            mingw-w64-ucrt-x86_64-fftw
-            mingw-w64-ucrt-x86_64-libusb
-            mingw-w64-ucrt-x86_64-python-lxml
-            mingw-w64-ucrt-x86_64-nsis
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gcc-libs
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-libmad
+            mingw-w64-x86_64-libsndfile
+            mingw-w64-x86_64-flac
+            mingw-w64-x86_64-fftw
+            mingw-w64-x86_64-python-lxml
+            mingw-w64-x86_64-nsis
 
       - name: D2XX SDK (64 bit)
         shell: msys2 {0}
@@ -124,7 +124,7 @@ jobs:
           echo "cmake:"
           which cmake || true
           cmake --version || true
-          pkg-config --modversion libusb-1.0
+          pkg-config --modversion libusb-1.0 || true
           echo "ccache:"
           ccache --version || true
 

@@ -1,10 +1,7 @@
 project(windows)
 
 # Set paths
-# QLC+DAN: MSYS2 is retiring MINGW64, so the installer is built in UCRT64
-if ("$ENV{MSYSTEM}" STREQUAL "UCRT64")
-    set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/ucrt64/bin)
-elseif (DEFINED $ENV{MSYSTEM_CARCH} AND $ENV{MSYSTEM_CARCH} STREQUAL "i686")
+if (DEFINED $ENV{MSYSTEM_CARCH} AND $ENV{MSYSTEM_CARCH} STREQUAL "i686")
     set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/mingw32/bin)
 else()
     set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/mingw64/bin)
@@ -21,8 +18,14 @@ endfunction()
 
 # MSYS2 libraries
 set(msys_path "${INSTALLROOT}/${LIBSDIR}")
-copy_system_library(msys_files "libusb-1.0.dll")
-install(FILES ${msys_files} DESTINATION ${msys_path})
+# QLC+DAN: MSYS2 no longer ships libusb for MINGW64. Without it the uDMX
+# plugin isn't built (see plugins/CMakeLists.txt), so the DLL isn't needed
+if(EXISTS ${SYS_LIBS_PATH}/libusb-1.0.dll)
+    copy_system_library(msys_files "libusb-1.0.dll")
+    install(FILES ${msys_files} DESTINATION ${msys_path})
+else()
+    message(WARNING "libusb-1.0.dll not found: installing without it (no uDMX support)")
+endif()
 
 # audio libraries
 set(mmedia_path "${INSTALLROOT}/${LIBSDIR}")
