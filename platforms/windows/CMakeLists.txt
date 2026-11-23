@@ -1,7 +1,10 @@
 project(windows)
 
 # Set paths
-if (DEFINED $ENV{MSYSTEM_CARCH} AND $ENV{MSYSTEM_CARCH} STREQUAL "i686")
+# QLC+DAN: MSYS2 is retiring MINGW64, so the installer is built in UCRT64
+if ("$ENV{MSYSTEM}" STREQUAL "UCRT64")
+    set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/ucrt64/bin)
+elseif (DEFINED $ENV{MSYSTEM_CARCH} AND $ENV{MSYSTEM_CARCH} STREQUAL "i686")
     set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/mingw32/bin)
 else()
     set(SYS_LIBS_PATH $ENV{SystemDrive}/msys64/mingw64/bin)
