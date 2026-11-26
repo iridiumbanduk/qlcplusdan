@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/fixturepreviews">
         <file alias="beamZ-STB448-13ch.json">../../resources/fixturepreviews/beamZ-STB448-13ch.json</file>
+        <file alias="eurolite-LED-Super-Strobe-ABL-22ch.json">../../resources/fixturepreviews/eurolite-LED-Super-Strobe-ABL-22ch.json</file>
     </qresource>
 </RCC>

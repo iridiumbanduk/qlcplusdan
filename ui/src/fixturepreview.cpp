@@ -72,9 +72,11 @@ bool PreviewPack::load(const QString &path)
     }
 
     QJsonObject o = doc.object();
+    m_layout = o.value("layout").toString("stb448");
     m_name = o.value("name").toString();
     m_manufacturer = o.value("manufacturer").toString();
     m_modelContains = o.value("modelContains").toString();
+    m_genericNameContains = o.value("genericNameContains").toString();
     m_channelCount = o.value("channelCount").toInt();
 
     QJsonObject ch = o.value("channels").toObject();
@@ -106,18 +108,41 @@ bool PreviewPack::load(const QString &path)
     m_strobe = readCurve(o.value("strobeCurve").toArray());
     m_flashMs = o.value("strobeFlashMs").toInt(30);
 
+    // Super Strobe
+    m_programmes = readRanges(o.value("programmes").toArray());
+    auto readBands = [](const QJsonArray &a) {
+        QList<Band> list;
+        for (const QJsonValue &v : a)
+        {
+            QJsonArray r = v.toArray();
+            QJsonArray c = r.at(3).toArray();
+            list.append({ r.at(0).toInt(), r.at(1).toInt(), r.at(2).toInt(),
+                          QColor(c.at(0).toInt(), c.at(1).toInt(), c.at(2).toInt()) });
+        }
+        return list;
+    };
+    m_presetColours = readBands(o.value("presetColours").toArray());
+    m_backgrounds = readBands(o.value("backgrounds").toArray());
+    m_speedCurve = readCurve(o.value("speedCurve").toArray());
+    m_whiteStrobe = readCurve(o.value("whiteStrobeCurve").toArray());
+    m_whiteFlashMsPerStep = o.value("whiteFlashMsPerStep").toDouble(2.6);
+
     QJsonObject clips = o.value("clips").toObject();
     for (auto it = clips.begin(); it != clips.end(); ++it)
     {
         QJsonObject c = it.value().toObject();
         PreviewClip clip;
-        clip.isRgb = (c.value("kind").toString() == "rgb");
-        clip.fps = c.value("fps").toInt();
+        clip.rows = c.value("rows").toInt();
+        clip.cols = c.value("cols").toInt();
+        clip.isRgb = (c.value("kind").toString() == "rgb") || clip.rows > 0;
+        clip.fps = c.value("fps").toDouble();
         clip.recSpeed = c.value("recSpeed").toInt();
         clip.frames = c.value("frames").toInt();
         clip.data = qUncompress(QByteArray::fromBase64(c.value("data").toString().toLatin1()));
-        int frameSize = clip.isRgb ? 32 * 3 : 16 * 2;
-        if (clip.frames <= 0 || clip.data.size() < clip.frames * frameSize)
+        int frameSize = clip.rows > 0 ? clip.rows * clip.cols * 3 : (clip.isRgb ? 32 * 3 : 16 * 2);
+        // a Super Strobe clip must be the 4 x 24 grid the preview draws
+        bool badGrid = clip.rows > 0 && (clip.rows != 4 || clip.cols != 24);
+        if (badGrid || clip.fps <= 0 || clip.frames <= 0 || clip.data.size() < clip.frames * frameSize)
         {
             qWarning() << "Fixture preview clip" << it.key() << "is incomplete";
             continue;
@@ -135,9 +160,28 @@ bool PreviewPack::matches(const Fixture *fixture) const
         return false;
     if (fixture->channels() != quint32(m_channelCount))
         return false;
+    // a fixture patched as Generic is recognised by its name
+    if (m_genericNameContains.isEmpty() == false &&
+        fixture->fixtureDef()->manufacturer() == KXMLFixtureGeneric &&
+        fixture->name().contains(m_genericNameContains, Qt::CaseInsensitive))
+        return true;
     if (fixture->fixtureDef()->manufacturer().compare(m_manufacturer, Qt::CaseInsensitive) != 0)
         return false;
     return fixture->fixtureDef()->model().contains(m_modelContains, Qt::CaseInsensitive);
+}
+
+int PreviewPack::band(const QList<Band> &bands, int value, QColor *color)
+{
+    for (const Band &b : bands)
+    {
+        if (value >= b.min && value <= b.max)
+        {
+            if (color)
+                *color = b.color;
+            return b.index;
+        }
+    }
+    return 0;
 }
 
 double PreviewPack::curve(const QVector<QPointF> &c, double x, bool logInterp)
@@ -300,7 +344,10 @@ void FixturePreview::slotTick()
         }
 
         PreviewState &st = m_states[fxi->id()];
-        simulate(pack, values, st, dt);
+        if (pack->m_layout == "superstrobe")
+            simulateSuperStrobe(pack, values, st, dt);
+        else
+            simulate(pack, values, st, dt);
         m_shown.append(qMakePair(fxi->id(), pack));
     }
     update();
@@ -426,6 +473,115 @@ void FixturePreview::simulate(const PreviewPack *pack, const QByteArray &v, Prev
     }
 }
 
+/* Eurolite LED Super Strobe ABL, 22 channels. Everything here was filmed:
+   - the built-in programmes, each with every colour preset and background
+     combination the show uses (other combinations: the programme drawn in the
+     preset's colour)
+   - the 4 colour segments are rows, bottom to top
+   - colour presets do nothing without a programme, and don't change colours set directly
+   - speed: time per step is proportional to (262 - speed) */
+void FixturePreview::simulateSuperStrobe(const PreviewPack *pack, const QByteArray &v, PreviewState &st, double dt)
+{
+    const int rows = 4, cols = 24;
+    auto val = [&](const char *name) { return int(uchar(v.at(pack->m_ch.value(name)))); };
+
+    QString key;
+    const PreviewClip *clip = pack->clipFor(pack->m_programmes, val("programme"), &key);
+    if (clip)
+    {
+        QColor presetColour;
+        int preset = PreviewPack::band(pack->m_presetColours, val("preset"), &presetColour);
+        int bg = PreviewPack::band(pack->m_backgrounds, val("background"));
+        QColor tint;    // invalid: the clip's own colours
+        if (preset > 0 || bg > 0)
+        {
+            QString combo = QString("%1_c%2_b%3").arg(key).arg(preset).arg(bg);
+            auto it = pack->m_clips.constFind(combo);
+            if (it != pack->m_clips.constEnd())
+            {
+                clip = &it.value();
+                key = combo;
+            }
+            else if (preset > 0)
+            {
+                // not filmed: the programme's pattern in the preset's colour
+                tint = presetColour;
+                key = QString("%1_tint%2").arg(key).arg(preset);
+            }
+        }
+        if (key != st.rgbClip)
+        {
+            st.rgbClip = key;
+            st.rgbFrame = 0;   // a new programme starts from its beginning
+        }
+        double rate = PreviewPack::curve(pack->m_speedCurve, val("speed"), true) /
+                      PreviewPack::curve(pack->m_speedCurve, clip->recSpeed, true);
+        st.rgbFrame = fmod(st.rgbFrame + dt * clip->fps * rate, clip->frames);
+        int frame = qBound(0, int(st.rgbFrame), clip->frames - 1);
+        const uchar *f = reinterpret_cast<const uchar *>(clip->data.constData()) + frame * rows * cols * 3;
+        bool flip = val("direction") >= 128;   // filmed: reverses the effect top to bottom
+        for (int r = 0; r < rows; r++)
+        {
+            const uchar *row = f + (flip ? rows - 1 - r : r) * cols * 3;
+            for (int c = 0; c < cols; c++)
+            {
+                int R = row[c * 3], G = row[c * 3 + 1], B = row[c * 3 + 2];
+                if (tint.isValid())
+                {
+                    double level = qMax(R, qMax(G, B)) / 255.0;
+                    st.cells[r * cols + c] = QColor(int(tint.red() * level), int(tint.green() * level), int(tint.blue() * level));
+                }
+                else
+                    st.cells[r * cols + c] = QColor(R, G, B);
+            }
+        }
+    }
+    else
+    {
+        // no programme: the segment colours. Segment 1 is the bottom row
+        st.rgbClip.clear();
+        const char *segs[4] = { "seg4", "seg3", "seg2", "seg1" };
+        for (int r = 0; r < rows; r++)
+        {
+            int ch = pack->m_ch.value(segs[r]);
+            QColor c(uchar(v.at(ch)), uchar(v.at(ch + 1)), uchar(v.at(ch + 2)));
+            for (int col = 0; col < cols; col++)
+                st.cells[r * cols + col] = c;
+        }
+    }
+
+    /* ---- colour strobe (0-8 = no strobe) and dimmer */
+    auto flashOn = [&](int value, double hz, double flashMs, double &phase) {
+        if (value < 9)
+        {
+            phase = 0;
+            return true;
+        }
+        phase = fmod(phase + dt * hz, 1.0);
+        double on = flashMs / 1000.0 * hz;
+        if (on >= 1.0)
+            return true;              // flashes longer than the gap between them: steady
+        // short flashes are shown for at least one screen refresh
+        on = qMin(0.5, qMax(on, TICK_MS / 1000.0 * hz));
+        return phase < on;
+    };
+    int strobe = val("strobe");
+    bool rgbOn = flashOn(strobe, PreviewPack::curve(pack->m_strobe, strobe, true), pack->m_flashMs, st.strobePhase);
+    double master = rgbOn ? val("master") / 255.0 : 0.0;
+    for (int i = 0; i < rows * cols; i++)
+    {
+        QColor c = st.cells[i];
+        st.cells[i] = QColor(int(c.red() * master), int(c.green() * master), int(c.blue() * master));
+    }
+
+    /* ---- white strip: dimmer, strobe and flash duration (255 = stays on) */
+    int wStrobe = val("whiteStrobe");
+    int flash = val("whiteFlash");
+    double flashMs = flash >= 255 ? 1e6 : flash * pack->m_whiteFlashMsPerStep;
+    bool whiteOn = flashOn(wStrobe, PreviewPack::curve(pack->m_whiteStrobe, wStrobe, true), flashMs, st.strobeAWPhase);
+    st.whiteStrip = whiteOn ? val("whiteDimmer") / 255.0 : 0.0;
+}
+
 QColor FixturePreview::ledColor(const QColor &c) const
 {
     // unlit LEDs are shown as dark grey
@@ -536,6 +692,49 @@ void FixturePreview::drawSTB448(QPainter &p, const QRectF &r, const PreviewState
     }
 }
 
+void FixturePreview::drawSuperStrobe(QPainter &p, const QRectF &r, const PreviewState &st)
+{
+    // body
+    p.setPen(QPen(QColor(70, 70, 76), 1.5));
+    p.setBrush(QColor(12, 12, 14));
+    p.drawRoundedRect(r, r.height() * 0.06, r.height() * 0.06);
+
+    // filmed proportions of the face: colour panel 41%, white strip 18%, colour panel 41%
+    QRectF face = r.adjusted(r.height() * 0.07, r.height() * 0.07, -r.height() * 0.07, -r.height() * 0.07);
+    double panelH = face.height() * 0.41, stripH = face.height() * 0.18;
+    p.setPen(Qt::NoPen);
+
+    // 4 rows of 36 LEDs (12 groups of 3); the filmed 24 cells are interpolated across them
+    const int leds = 36;
+    double ledW = face.width() / leds;
+    for (int row = 0; row < 4; row++)
+    {
+        double y = face.top() + (row < 2 ? row * panelH / 2 : panelH + stripH + (row - 2) * panelH / 2);
+        for (int i = 0; i < leds; i++)
+        {
+            double x = (i + 0.5) / leds * 24 - 0.5;
+            int c0 = qBound(0, int(qFloor(x)), 23), c1 = qMin(23, c0 + 1);
+            double f = qBound(0.0, x - c0, 1.0);
+            const QColor &a = st.cells[row * 24 + c0], &b = st.cells[row * 24 + c1];
+            QColor c(int(a.red() + (b.red() - a.red()) * f), int(a.green() + (b.green() - a.green()) * f),
+                     int(a.blue() + (b.blue() - a.blue()) * f));
+            p.setBrush(ledColor(c));
+            p.drawRect(QRectF(face.left() + i * ledW + ledW * 0.06, y + panelH * 0.03, ledW * 0.88, panelH / 2 - panelH * 0.06));
+        }
+    }
+
+    // white strip: 3 rows of 72 cold white LEDs
+    double w = qMin(1.0, st.whiteStrip * m_awBoost);
+    QColor white = ledColor(QColor::fromRgbF(w, w, w * 1.0));
+    if (w > 0)
+        white = QColor(qMin(255, int(white.red() * 0.94)), qMin(255, int(white.green() * 0.97)), white.blue());   // cold white
+    p.setBrush(white);
+    double sy = face.top() + panelH, dot = qMin(face.width() / 72, stripH / 3) * 0.7;
+    for (int row = 0; row < 3; row++)
+        for (int i = 0; i < 72; i++)
+            p.drawEllipse(QPointF(face.left() + (i + 0.5) * face.width() / 72, sy + (row + 0.5) * stripH / 3), dot / 2, dot / 2);
+}
+
 void FixturePreview::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
@@ -546,26 +745,63 @@ void FixturePreview::paintEvent(QPaintEvent *)
     {
         p.setPen(QColor(200, 200, 200));
         p.drawText(rect().adjusted(12, 12, -12, -12), Qt::AlignCenter | Qt::TextWordWrap,
-                   tr("No previewable fixtures in this project.\n\nSupported: beamZ STB448 in 13-channel mode."));
+                   tr("No previewable fixtures in this project.\n\nSupported: beamZ STB448 in 13-channel mode, "
+                      "Eurolite LED Super Strobe ABL in 22-channel mode."));
         return;
     }
 
+    // as on stage: the tall bars (STB448s, on stands) to the left and right, and the wide
+    // fixtures (the Super Strobe, on the floor in front of the drums) between them at the bottom
+    QList<quint32> bars, wides;
+    for (const auto &s : m_shown)
+        (s.second->m_layout == "superstrobe" ? wides : bars).append(s.first);
+
     const double labelH = 22, margin = 12;
-    int n = m_shown.count();
-    double slotW = (width() - margin) / n;
-    double barH = height() - 2 * margin - labelH;
-    double barW = qMin(slotW - margin, barH / 8.0);      // the bar is about 10:1, keep it slim
-
-    for (int i = 0; i < n; i++)
-    {
-        quint32 id = m_shown.at(i).first;
-        double cx = margin / 2 + slotW * (i + 0.5);
-        QRectF bar(cx - barW / 2, margin, barW, barH);
-        drawSTB448(p, bar, m_states[id]);
-
+    const double fullH = height() - 2 * margin - labelH;      // everything stands on one line
+    auto label = [&](quint32 id, double cx, double slotW) {
         Fixture *fxi = m_doc->fixture(id);
         p.setPen(QColor(220, 220, 220));
-        p.drawText(QRectF(cx - slotW / 2, height() - margin - labelH + 4, slotW, labelH),
+        p.drawText(QRectF(cx - slotW / 2, margin + fullH + 4, slotW, labelH),
                    Qt::AlignHCenter | Qt::AlignTop, fxi ? fxi->name() : QString());
+    };
+    if (fullH < 20)
+        return;
+
+    // horizontal space: the wide fixtures get the middle half when there are bars as well
+    double gapW = bars.isEmpty() ? width() : (wides.isEmpty() ? 0 : width() * 0.5);
+    double gapLeft = (width() - gapW) / 2;
+
+    if (bars.isEmpty() == false)
+    {
+        int n = bars.count();
+        int leftCount = wides.isEmpty() ? n : (n + 1) / 2;    // first half on the left
+        double sideW = wides.isEmpty() ? width() - margin : gapLeft;
+        double barW = fullH / 8.0;                               // the bar is about 10:1, keep it slim
+        for (int i = 0; i < n; i++)
+        {
+            bool left = i < leftCount;
+            int count = left ? leftCount : n - leftCount;
+            int idx = left ? i : i - leftCount;
+            double slotW = sideW / count;
+            double x0 = left ? (wides.isEmpty() ? margin / 2 : 0) : width() - sideW;
+            double cx = x0 + slotW * (idx + 0.5);
+            double w = qMin(slotW - margin, barW);
+            drawSTB448(p, QRectF(cx - w / 2, margin, w, fullH), m_states[bars.at(i)]);
+            label(bars.at(i), cx, slotW);
+        }
+    }
+
+    if (wides.isEmpty() == false)
+    {
+        double slotW = (gapW - margin) / wides.count();
+        // the Super Strobe's face is about 1.9:1; next to bars it stays low, like on the floor
+        double h = qMin((slotW - margin) / 1.9, bars.isEmpty() ? fullH : fullH * 0.4);
+        double w = h * 1.9;
+        for (int i = 0; i < wides.count(); i++)
+        {
+            double cx = gapLeft + margin / 2 + slotW * (i + 0.5);
+            drawSuperStrobe(p, QRectF(cx - w / 2, margin + fullH - h, w, h), m_states[wides.at(i)]);
+            label(wides.at(i), cx, slotW);
+        }
     }
 }

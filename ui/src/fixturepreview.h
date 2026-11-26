@@ -41,7 +41,9 @@ class Doc;
 struct PreviewClip
 {
     bool isRgb;          // true: 32 RGB sections x 3 bytes; false: 16 rows x (amber, white)
-    int fps;             // frames per second of the recording
+    int rows = 0;        // grid clips (Super Strobe): rows x cols RGB cells, top row first
+    int cols = 0;
+    double fps;          // frames per second of the recording
     int recSpeed;        // value of the speed channel during the recording
     int frames;
     QByteArray data;
@@ -56,10 +58,15 @@ public:
 
     struct Range { int min; int max; QString clip; };
     struct Background { int min; int max; QColor color; };
+    struct Band { int min; int max; int index; QColor color; };
 
+    /** "stb448" (default) or "superstrobe" */
+    QString m_layout;
     QString m_name;
     QString m_manufacturer;
     QString m_modelContains;
+    /** also match a Generic fixture with this in its name (e.g. a Super Strobe patched as Generic) */
+    QString m_genericNameContains;
     int m_channelCount = 0;
     QMap<QString, int> m_ch;
     QList<Range> m_rgbEffects;
@@ -68,6 +75,14 @@ public:
     QVector<QPointF> m_rgbSpeed, m_awSpeed, m_strobe;
     int m_flashMs = 30;
     QHash<QString, PreviewClip> m_clips;
+
+    // Super Strobe
+    QList<Range> m_programmes;
+    QList<Band> m_presetColours;
+    QList<Band> m_backgrounds;
+    QVector<QPointF> m_speedCurve, m_whiteStrobe;
+    double m_whiteFlashMsPerStep = 2.6;
+    static int band(const QList<Band> &bands, int value, QColor *color = NULL);
 
     /** Interpolate a curve (log-space for rates) */
     static double curve(const QVector<QPointF> &c, double x, bool logInterp);
@@ -85,6 +100,9 @@ struct PreviewState
     QString rgbClip, awClip;
     double rgbFrame = 0, awFrame = 0;
     double strobePhase = 0, strobeAWPhase = 0;
+    // Super Strobe: 4 x 24 RGB cells (top row first) and the white strip
+    QColor cells[4 * 24];
+    double whiteStrip = 0;
 };
 
 class FixturePreview : public QWidget
@@ -113,6 +131,8 @@ private:
     void loadPacks();
     void simulate(const PreviewPack *pack, const QByteArray &values, PreviewState &st, double dt);
     void drawSTB448(QPainter &p, const QRectF &r, const PreviewState &st);
+    void simulateSuperStrobe(const PreviewPack *pack, const QByteArray &values, PreviewState &st, double dt);
+    void drawSuperStrobe(QPainter &p, const QRectF &r, const PreviewState &st);
     /** Convert an LED's light output (0-255, linear) to a screen colour */
     QColor ledColor(const QColor &c) const;
 
